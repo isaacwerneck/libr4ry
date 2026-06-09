@@ -1,0 +1,38 @@
+[
+  {
+    "slug": "programacao",
+    "title": "Programação",
+    "description": "Lógica, JavaScript, web e pequenos exercícios.",
+    "folder": "Study",
+    "subfolder": "Coding",
+    "icon": "💻",
+    "file": "content/topics/programacao.md"
+  },
+  {
+    "slug": "design",
+    "title": "Design",
+    "description": "Paletas, composição, referências visuais e estética.",
+    "folder": "Study",
+    "subfolder": "Visual",
+    "icon": "🎨",
+    "file": "content/topics/design.md"
+  },
+  {
+    "slug": "estudos",
+    "title": "Estudos",
+    "description": "Resumo de temas, listas de revisão e anotações curtas.",
+    "folder": "Study",
+    "subfolder": "Notes",
+    "icon": "📝",
+    "file": "content/topics/estudos.md"
+  },
+  {
+    "slug": "teste",
+    "title": "Teste",
+    "description": "Uma página para experimentar seu primeiro resumo em markdown.",
+    "folder": "Sandbox",
+    "subfolder": "Playground",
+    "icon": "✨",
+    "file": "content/topics/teste.md"
+  }
+]

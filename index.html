@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>libr4ry</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <p class="eyebrow">naked drift</p>
+        <h1>libr4ry</h1>
+        <p class="subtitle">
+          your place to study
+        </p>
+      </header>
+
+      <section class="explorer-shell">
+        <aside class="explorer-sidebar">
+          <div class="explorer-header">
+            <h2>Pastes</h2>
+            <p>Only the file name appears here.</p>
+          </div>
+          <div id="paste-list" class="paste-list"></div>
+        </aside>
+
+        <section class="reader-panel">
+          <div class="panel-title-row">
+            <h2>Preview</h2>
+            <p>Click a paste to open its markdown.</p>
+          </div>
+          <div class="editor-toolbar">
+            <button id="edit-toggle" class="toolbar-button">Edit</button>
+            <button id="save-note" class="toolbar-button secondary" disabled>Save</button>
+            <button id="theme-toggle" class="toolbar-button">Dark mode</button>
+          </div>
+          <div id="readme-panel" class="markdown-card"></div>
+          <div id="editor-shell" class="editor-shell hidden">
+            <textarea id="editor-area" class="editor-area"></textarea>
+            <p id="save-status" class="save-status">Edits are saved through your browser’s file picker.</p>
+          </div>
+        </section>
+
+        <aside class="assistant-panel">
+          <div class="assistant-header">
+            <h2>AI Copilot</h2>
+            <p>Ask for help writing, organizing, or expanding your notes.</p>
+          </div>
+
+          <div class="assistant-connect">
+            <button id="connect-ai" class="toolbar-button">Start local Claude mode</button>
+          </div>
+
+          <div id="assistant-messages" class="assistant-messages"></div>
+
+          <div class="assistant-composer">
+            <textarea id="assistant-input" class="assistant-input-area" placeholder="Ask something like: summarize this note or turn it into bullets"></textarea>
+            <button id="assistant-send" class="toolbar-button secondary">Send</button>
+          </div>
+          <p id="assistant-status" class="save-status">Local Claude-style assistant is ready.</p>
+        </aside>
+      </section>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
