@@ -1,0 +1,4 @@
+interface:
+  display_name: "Library4 Design"
+  short_description: "UI, UX e front-end criativos com base e validação"
+  default_prompt: "Use $library4-design para criar ou melhorar esta tela do Library4 com identidade própria, boa usabilidade e validação do fluxo."

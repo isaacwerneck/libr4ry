@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#19271f">
+  <title>Library4 — seu espaço de estudo</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Ir para o conteúdo</a>
+  <section id="auth-view" class="auth-layout">
+    <div class="auth-story">
+      <a class="wordmark" href="/">libr<span>4</span>ry<span class="brand-dot">.</span></a>
+      <span class="eyebrow light">UM LUGAR PARA AS SUAS IDEIAS</span>
+      <h1>O que você aprende<br>merece ficar<span>.</span></h1>
+      <p>Abra um caderno. Faça conexões. Volte amanhã.<br>Seu conhecimento ganha espaço aqui.</p>
+      <div class="book-art" aria-hidden="true"><div class="art-spine">LIBRARY4 / ESTUDOS</div><div class="art-page"><span>Notas para<br>o futuro.</span><i>01 — IDEIAS QUE CONTINUAM</i><div class="art-lines"></div></div><div class="art-tab">a</div></div>
+      <span class="auth-footnote">ESCREVER É UM JEITO DE CONTINUAR.</span>
+    </div>
+    <div class="auth-panel">
+      <div class="auth-panel-inner">
+        <span class="eyebrow">SEU ESPAÇO PESSOAL</span>
+        <h2 id="auth-heading">Bom ter você aqui.</h2>
+        <p id="auth-description">Entre para continuar seus estudos.</p>
+        <form id="auth-form" method="post" action="/api/login">
+          <label id="name-field" hidden>Como podemos chamar você?<input name="name" autocomplete="name" maxlength="60"></label>
+          <label>E-mail<input name="email" type="email" autocomplete="username" required maxlength="254" placeholder="voce@exemplo.com"></label>
+          <label>Senha da conta<input name="password" type="password" autocomplete="current-password" required minlength="12" maxlength="128" placeholder="Pelo menos 12 caracteres"></label>
+          <fieldset id="content-password-fields" hidden disabled>
+            <legend>Proteção dos cadernos</legend>
+            <label>Senha de conteúdo<input id="signup-content-password" type="password" autocomplete="off" minlength="12" maxlength="128" required></label>
+            <label>Confirme a senha de conteúdo<input id="signup-content-confirmation" type="password" autocomplete="off" minlength="12" maxlength="128" required></label>
+            <label class="check-label"><input name="understood" type="checkbox" required> Entendo que, se esquecer esta senha, o administrador não consegue recuperar meus cadernos.</label>
+          </fieldset>
+          <p id="auth-error" class="form-error" role="alert"></p>
+          <button id="auth-submit" class="button primary" type="submit">Entrar <span aria-hidden="true">↗</span></button>
+        </form>
+        <button id="auth-toggle" class="text-button">Primeira vez? Crie sua conta</button>
+        <div class="privacy-note"><span aria-hidden="true">◇</span><p>Seus cadernos são privados.<br>O conteúdo é protegido no seu dispositivo.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div id="workspace" class="workspace" hidden>
+    <aside class="sidebar">
+      <a class="wordmark" href="/">libr<span>4</span>ry<span class="brand-dot">.</span></a>
+      <p class="sidebar-caption">O SEU ATELIÊ DE ESTUDO</p>
+      <nav aria-label="Navegação principal">
+        <button id="library-nav" class="nav-button active"><span aria-hidden="true">▤</span> Meus cadernos <span id="notebook-count" class="nav-count">0</span></button>
+        <button id="progress-nav" class="nav-button"><span aria-hidden="true">◴</span> Meu progresso</button>
+      </nav>
+      <div class="sidebar-quote"><span aria-hidden="true">“</span><p>Uma página de cada vez.<br>Um pouco mais de você.</p></div>
+      <div class="sidebar-bottom">
+        <span class="connection-label"><i></i> Espaço privado</span>
+        <div class="profile-row"><span id="avatar" class="avatar">?</span><div><strong id="profile-name">Sua conta</strong><small>Bom estudo por aqui.</small></div><button id="logout" class="icon-button" aria-label="Sair da conta" title="Sair">↗</button></div>
+      </div>
+    </aside>
+    <main id="main" class="main">
+      <header class="topbar"><div><span class="breadcrumb">Seu espaço</span><span class="breadcrumb-divider">/</span><strong id="view-name">Cadernos</strong></div><span id="today" class="date-label"></span><button id="new-notebook" class="button primary compact">+ Novo caderno</button></header>
+
+      <section id="library-view" class="library-view">
+        <div class="library-heading"><div><span class="eyebrow">CONHECIMENTO EM CONSTRUÇÃO</span><h1>Seu mundo,<br><em>em páginas.</em></h1><p id="welcome-text">Tudo o que você aprende encontra um lugar aqui.</p></div><div class="chapter-mark" aria-hidden="true"><span>SEU PRÓXIMO</span><strong>capítulo</strong><i>começa com uma ideia ↙</i></div></div>
+        <div class="section-heading"><h2>Sua coleção <span id="collection-count">/ 00</span></h2><p>Escolha um caderno. Continue de onde parou.</p></div>
+        <div id="notebook-grid" class="notebook-grid"></div>
+        <div id="empty-library" class="empty-library"><span class="empty-symbol" aria-hidden="true">+</span><h3>Uma ideia já é um começo.</h3><p>Crie seu primeiro caderno e dê um lugar<br>ao que você quer aprender.</p><button id="first-notebook" class="button dark">Criar meu primeiro caderno ↗</button></div>
+        <footer class="library-footer"><span>FEITO PARA VOLTAR.</span><p>Seu ritmo. Suas ideias. Seu lugar.</p><span aria-hidden="true">L4 — 001</span></footer>
+      </section>
+
+      <section id="progress-view" class="progress-view" hidden><span class="eyebrow">O QUE VOCÊ JÁ CONSTRUIU</span><h1>Um pouco,<br><em>todos os dias.</em></h1><p>Um retrato do conteúdo atual dos seus cadernos.</p><div id="progress-metrics" class="metrics-grid"></div><div class="progress-note"><span aria-hidden="true">↗</span><p>O progresso também está nas ideias que você conecta.<br>Estes números mostram seu material atual, sem medir horas de estudo.</p></div></section>
+
+      <section id="notebook-view" class="notebook-view" hidden>
+        <div class="notebook-heading"><button id="back-library" class="text-button">← Sua coleção</button><div class="notebook-heading-line"><div><span id="notebook-subject" class="eyebrow"></span><h1 id="notebook-title"></h1></div><span id="save-state" class="save-state" role="status" aria-live="polite">Carregando</span></div><div id="notebook-tags" class="tags"></div></div>
+        <div class="notebook-layout">
+          <aside class="page-index"><div class="index-heading"><h2>Índice</h2><button id="add-page" class="icon-button" aria-label="Criar página" title="Criar página">+</button></div><div id="page-list"></div><div class="goals"><h2>Pequenos passos</h2><form id="task-form"><label class="sr-only" for="task-input">Nova meta</label><input id="task-input" maxlength="200" placeholder="Adicionar uma meta"><button type="submit" class="icon-button" aria-label="Adicionar meta">+</button></form><div id="task-list"></div></div><div id="notebook-metrics" class="notebook-metrics"></div></aside>
+          <div class="writing-area">
+            <div class="editor-toolbar"><div class="mode-control" aria-label="Modo da página"><button id="edit-mode" class="selected" aria-pressed="true">Escrever</button><button id="preview-mode" aria-pressed="false">Ler</button></div><div class="page-controls"><label>Tamanho<select id="page-size"><option value="small">Pequeno</option><option value="medium" selected>Médio</option><option value="large">Grande</option></select></label><label>Letra<select id="font-size"><option value="14">14</option><option value="16" selected>16</option><option value="18">18</option><option value="20">20</option><option value="24">24</option></select></label><button id="history-button" class="text-button">↶ Versões</button></div></div>
+            <article id="paper" class="paper"><div class="paper-top"><span id="page-number">PÁGINA 01</span><span aria-hidden="true">LIBRARY4 / NOTAS</span></div><label class="sr-only" for="page-title">Título da página</label><input id="page-title" class="page-title" maxlength="120" placeholder="Dê um título à sua ideia"><label class="sr-only" for="page-content">Conteúdo Markdown da página</label><textarea id="page-content" spellcheck="true" placeholder="Comece com uma ideia…&#10;&#10;Use # para títulos, **para destaque** e listas para organizar."></textarea><div id="page-preview" class="markdown" hidden></div><div class="paper-bottom"><span id="line-count">0 linhas</span><span id="word-count">0 palavras</span><span id="page-position">01</span></div></article>
+            <div class="page-navigation"><button id="previous-page" class="text-button">← Anterior</button><span id="page-total"></span><button id="next-page" class="text-button">Próxima →</button></div>
+            <p id="writing-note" class="writing-note">Prévia visual: o texto fica apenas nesta aba e será perdido ao recarregar.</p>
+            <div id="save-error" class="save-error" role="alert" hidden><p></p><button id="retry-save" class="button dark compact">Tentar novamente</button><button id="resolve-conflict" class="text-button" hidden>Recarregar preservando meu rascunho</button></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="notebook-dialog"><form id="notebook-form"><div class="dialog-top"><span class="eyebrow">UMA NOVA POSSIBILIDADE</span><button type="button" class="icon-button" data-close="notebook-dialog" aria-label="Fechar">×</button></div><h2>Abra um novo capítulo.</h2><p>Um caderno para aquilo que você quer explorar.</p><label>Nome do caderno<input name="title" required maxlength="80" placeholder="Ex.: Design que faz sentido"></label><label>Matéria ou categoria<input name="subject" maxlength="60" placeholder="Ex.: Design"></label><label>Tags <small>separadas por vírgula</small><input name="tags" maxlength="200" placeholder="ux, referências, ideias"></label><p id="notebook-form-error" class="form-error" role="alert"></p><button type="submit" class="button primary">Criar caderno ↗</button><small class="dialog-footnote">Privado. Seu conteúdo começa e continua com você.</small></form></dialog>
+  <dialog id="unlock-dialog"><form id="unlock-form" method="dialog"><span class="eyebrow">SEU CONTEÚDO CONTINUA PROTEGIDO</span><h2>Vamos abrir seus cadernos.</h2><p>Informe a senha de conteúdo, diferente da senha da conta. Ela é usada somente neste navegador e será pedida novamente ao recarregar.</p><label>Senha de conteúdo<input name="contentPassword" type="password" required minlength="12" maxlength="128" autocomplete="off"></label><p id="unlock-error" class="form-error" role="alert"></p><button type="submit" class="button primary">Desbloquear</button><button id="unlock-logout" type="button" class="text-button">Sair da conta</button></form></dialog>
+  <dialog id="history-dialog"><div class="dialog-top"><span class="eyebrow">IDEIAS QUE VOCÊ PODE RECUPERAR</span><button class="icon-button" data-close="history-dialog" aria-label="Fechar">×</button></div><h2>Versões desta página.</h2><p>Restaurar cria uma nova versão e preserva a atual.</p><div id="history-list" class="history-list"></div><pre id="history-preview" class="history-preview" hidden></pre><button id="restore-version" class="button primary" disabled>Restaurar esta versão</button></dialog>
+  <div id="notification" class="notification" role="status" hidden></div>
+</body>
+</html>
