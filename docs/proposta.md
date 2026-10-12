@@ -1,6 +1,6 @@
 # Library4 — Proposta de reconstrução
 
-Atualizado em 07/10/2026. Reconstrução local iniciada; este documento define o produto. Andamento real registrado no [passo a passo](passo-a-passo.md), sem tratar requisitos como funcionalidades entregues.
+Atualizado em 10/10/2026. Reconstrução local iniciada; este documento define o produto. Andamento real registrado no [passo a passo](passo-a-passo.md), sem tratar requisitos como funcionalidades entregues.
 
 Documentos associados: [requisitos](requisitos-funcionais.md), [modelo SQL](banco-de-dados.md) e [passo a passo](passo-a-passo.md).
 
@@ -14,9 +14,13 @@ O progresso deve ser visível sem transformar estudo em competição obrigatóri
 
 ## 2. Experiência inicial e identidade
 
-Após login, entrar diretamente no ambiente de estudo, sem tutorial obrigatório. No primeiro acesso, oferecer a criação do primeiro caderno. No retorno, facilitar continuar estudando; o comportamento exato da tela inicial ainda será desenhado.
+Direção revisada: depois de login e desbloqueio, abrir a Home com perfil, coleção e acesso social; retomar diretamente um caderno aberto nas últimas 24 horas. Definir o marco temporal e a sincronização entre dispositivos. No primeiro acesso, oferecer a criação do primeiro caderno, sem tutorial obrigatório. Recursos sociais continuam sujeitos ao escopo da seção 12.
+
+A [direção artística consolidada](design-templo.md) orienta a próxima revisão: mesa de madeira, caderno físico central, conforto, personalização e progresso sem pressão. Pixel art é uma alternativa a comparar. O documento distingue decisões de funcionamento ainda abertas e não representa funcionalidades entregues.
 
 Controles claros, ações importantes acessíveis, leitura confortável e interface intuitiva. A identidade de caderno aparece desde o MVP por composição, capas ou marcadores simples. Animações complexas e personalização avançada não são pré-requisitos da escrita.
+
+Decisão complementar aprovada: escrever na folha com os efeitos aplicados, sem exigir conhecimento de Markdown; manter a fonte como opção avançada e formato privado. Ferramentas de seleção ficam diretas ao lado, personalização separada. Manipulação por Ctrl+roda/Ctrl+arraste esquerdo, virada por ponta arrastável e estados de capa/contracapa reforçam o caderno sem aumentar contagem de páginas. Cor/acabamento personalizáveis; desenhos complexos de capa continuam evolução posterior. Tiptap/extensões e esbuild foram aprovados para esta integração.
 
 A interface deve adaptar a composição ao celular, permitir teclado e zoom e respeitar preferência por movimento reduzido. A skill `library4-design` orienta a direção visual e a validação.
 
@@ -28,7 +32,7 @@ Recuperação de conta e recuperação de chaves de conteúdo são processos dis
 
 ## 4. Cadernos
 
-Múltiplos cadernos por usuário. Criação simples com nome, matéria/categoria e tags; obrigatoriedade e limites dos campos ainda serão especificados. Personalização pode ser acessada depois da criação.
+Múltiplos cadernos por usuário. A revisão pede nome, matéria/tags e tamanho na criação, com demais opções preenchidas pelo caderno padrão da pessoa. Especificar campos, obrigatoriedade e limites antes da implementação. Personalização pode ser acessada depois da criação. A coleção terá estantes, recentes e favoritos; falta definir se um caderno pertence a uma ou várias estantes.
 
 Exemplos de cadernos: Programação, Design, Matemática, Inglês e projetos pessoais. Cada caderno reúne páginas independentes, metas opcionais e seus próprios indicadores.
 
@@ -47,7 +51,7 @@ O modelo SQL mantém páginas como documentos lógicos e registra o formato/capa
 
 Decisão aprovada: escrita direta em Markdown com prévia. Suporte inicial a texto, títulos, ênfase, listas, links e blocos de código. A sintaxe suportada e o comportamento de edição/prévia precisam ser documentados na implementação.
 
-Imagens, áudio, MP3 e outros arquivos são etapas posteriores. Editor visual, drag-and-drop e atalhos adicionais não estão definidos. Conteúdo e URLs não confiáveis precisam de tratamento seguro na renderização.
+Revisão artística: selecionar trechos e mudar fontes como no Word foi solicitado. Markdown puro não representa fontes por trecho; definir editor visual, formato persistido e relação com Markdown antes de implementar. A implementação atual permanece Markdown com prévia. Imagens, áudio, MP3 e outros arquivos são etapas posteriores. Drag-and-drop e atalhos adicionais não estão definidos. Conteúdo e URLs não confiáveis precisam de tratamento seguro na renderização.
 
 ## 7. Salvamento automático contínuo
 
@@ -73,7 +77,7 @@ MVP: páginas com conteúdo, palavras atuais e tarefas concluídas por caderno, 
 
 Definir contagem de palavras, conteúdo significativo e tratamento de Markdown antes de implementar. Separar estado atual de produção histórica: apagar ou restaurar texto muda o estado atual, mas não reescreve silenciosamente o passado. Restauração não deve contar automaticamente como nova produção.
 
-Etapas posteriores: produção por dia/semana/mês, linhas com definição explícita, tempo aberto, tempo de estudo e dashboards completos do caderno e da conta. Tempo aberto não prova estudo. Definir timezone, sessões inativas e metodologia antes de exibir números históricos.
+O histórico diário ganhou importância na revisão: consultar no perfil os dias de escrita, quais cadernos foram usados e quanto foi produzido. Definir o significado de “páginas escritas” sem inflar produção por mudanças de fonte/tamanho ou restauração. Ainda não implementado. Produção por semana/mês, linhas, tempo e dashboards completos dependem de definição própria. Tempo aberto não prova estudo; definir timezone, sessões inativas e metodologia antes de exibir números históricos.
 
 ## 11. Privacidade e criptografia
 
@@ -108,7 +112,7 @@ Busca por texto, título, tags e matéria está na visão do produto. Para cader
 
 O MVP entrega conta → caderno → página → Markdown/prévia → salvamento constante → retorno → recuperação recente, com metas e métricas básicas. Cadernos privados seguros são requisito do MVP, não uma melhoria posterior.
 
-Após o núcleo: multimídia; histórico de atividade e dashboards completos; personalização e animações; recursos sociais. A publicação básica tem prioridade própria a fechar, sem depender obrigatoriamente de amigos.
+Após o núcleo, a revisão artística prioriza a experiência física do caderno e o reconhecimento do progresso. A sequência de personalização, animações, histórico diário, multimídia e recursos sociais será refinada após as decisões do editor e a comparação visual; esses requisitos não estão todos entregues no MVP atual. A publicação básica tem prioridade própria a fechar, sem depender obrigatoriamente de amigos.
 
 Requisitos e critérios de aceite estão em [requisitos-funcionais.md](requisitos-funcionais.md); sequência e condições de conclusão em [passo-a-passo.md](passo-a-passo.md).
 

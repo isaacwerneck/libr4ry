@@ -1,7 +1,49 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { splitPages, pageCapacity, countLines, countWords } from '../public/pagination.js';
+import { splitPages, pageCapacity, countLines, countWords, visiblePages, bookOpening, adjacentOpening, planPageEdit } from '../public/pagination.js';
 import { makeSecret, importKey, seal, open, createRoot, unlockRoot } from '../public/crypto.js';
+
+test('dupla de folhas preserva páginas e seleção sem inventar uma última página', () => {
+  const pages = [{ content: 'primeira' }, { content: 'segunda' }, { content: 'última' }];
+  assert.deepEqual(visiblePages(pages, pages[1], true), pages.slice(1, 3));
+  assert.deepEqual(visiblePages(pages, pages[1], false), [pages[1]]);
+  assert.deepEqual(visiblePages(pages, pages[2], true), pages.slice(1, 3));
+  assert.deepEqual(visiblePages(pages, {}, true), []);
+  assert.equal(visiblePages(pages, pages[0], true)[0], pages[0]);
+  assert.equal(pages.length, 3);
+});
+
+test('frentes e versos conservam ordem física, guardas e extremos pares ou ímpares', () => {
+  for (let count = 1; count <= 6; count++) {
+    const pages = Array.from({ length: count }, (_, id) => ({ id }));
+    assert.deepEqual(bookOpening(pages, pages[0]), [null, pages[0]]);
+    let page = pages[0]; const encountered = [];
+    do {
+      const opening = bookOpening(pages, page);
+      encountered.push(...opening.filter(Boolean));
+      const next = adjacentOpening(pages, page, 1);
+      if (next) assert.equal(adjacentOpening(pages, next, -1), page);
+      page = next;
+    } while (page);
+    assert.deepEqual(encountered, pages);
+    assert.equal(adjacentOpening(pages, pages[0], -1), null);
+    assert.equal(adjacentOpening(pages, pages.at(-1), 1), null);
+    if (count % 2 === 0) assert.deepEqual(bookOpening(pages, pages.at(-1)), [pages.at(-1), null]);
+  }
+  assert.deepEqual(bookOpening([], {}), [null, null]);
+  assert.equal(adjacentOpening([], {}, 1), null);
+});
+
+test('divisão automática respeita 500 páginas sem perder texto no limite', () => {
+  const text = 'anotação\n'.repeat(40);
+  const available = planPageEdit(text, 'medium', 16, 499);
+  assert.equal(available.limited, false);
+  assert.equal(available.chunks.length, 2);
+  assert.equal(available.chunks.join(''), text);
+  const full = planPageEdit(text, 'medium', 16, 500);
+  assert.equal(full.limited, true);
+  assert.deepEqual(full.chunks, [text]);
+});
 
 test('paginação preserva todos os caracteres em vários tamanhos e fontes', () => {
   const content = 'Ideias, ação e revisão 📝. '.repeat(300) + '\n\n' + 'linha\n'.repeat(70);

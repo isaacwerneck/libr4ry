@@ -11,14 +11,19 @@ const root = fileURLToPath(new URL('.', import.meta.url));
 const assets = new Map([
   ['/', ['public/index.html', 'text/html']],
   ['/index.html', ['public/index.html', 'text/html']],
-  ...['styles.css', 'app.js', 'crypto.js', 'pagination.js', 'storage.js'].map(file =>
+  ...['styles.css', 'library.css', 'notebook.css', 'notebook-motion.js', 'notebook-controls.js', 'notebook-preferences.js', 'drafts.js', 'notebook-viewport.js', 'edit-history.js', 'collection.js', 'app.js', 'crypto.js', 'pagination.js', 'storage.js'].map(file =>
     [`/${file}`, [`public/${file}`, file.endsWith('.css') ? 'text/css' : 'text/javascript']]),
+  ['/notebook-writing.js', ['public/notebook-writing.js', 'text/javascript']],
+  ['/notebook-reminder.js', ['public/notebook-reminder.js', 'text/javascript']],
+  ['/cover-design.js', ['public/cover-design.js', 'text/javascript']],
+  ['/cover-editor.js', ['public/cover-editor.js', 'text/javascript']],
+  ['/visual-editor.js', ['public/vendor/visual-editor.js', 'text/javascript']],
   ['/markdown-it.mjs', ['node_modules/markdown-it/dist/browser/markdown-it.esm.min.mjs', 'text/javascript']],
 ]);
 const attempts = new Map();
 
 function headers(res) {
-  res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
+  res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data: blob:; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('Cache-Control', 'no-store');

@@ -1,5 +1,8 @@
 import { makeSecret, importKey, toBase64, fromBase64, seal, open } from './crypto.js';
 import { pageCapacity } from './pagination.js';
+import { preferences } from './notebook-preferences.js';
+import { organization } from './collection.js';
+import { coverDesigns } from './cover-design.js';
 
 export async function api(path, body) {
   const response = await fetch(path, {
@@ -28,8 +31,10 @@ function taskData(task) {
   return { title: task.title, done: task.done };
 }
 
-function metadata(book) {
-  return { title: book.title, subject: book.subject, tags: [...book.tags] };
+export function metadata(book) {
+  return { title: book.title, subject: book.subject, tags: [...book.tags],
+    preferences: preferences(book.preferences), position: book.position || null,
+    organization: organization(book.organization), covers: coverDesigns(book.covers) };
 }
 
 function validatePage(page) {
@@ -74,6 +79,8 @@ export async function loadBook(record, user, keyset, rootKey, request = api) {
   if (typeof meta?.title !== 'string' || typeof meta.subject !== 'string' || !Array.isArray(meta.tags)
     || !meta.tags.every(tag => typeof tag === 'string')) throw new Error('Dados do caderno inválidos.');
   Object.assign(book, meta, { revision: Number(detail.revision), generation: 0, confirmed: 0, pages: [], tasks: [] });
+  book.organization = organization(meta.organization);
+  book.covers = coverDesigns(meta.covers);
   for (const row of detail.pages) {
     const value = validatePage(await open(book.key, row.encrypted_payload, context(book, 'page', row.id, row.revision)));
     book.pages.push({ ...value, id: row.id, revision: Number(row.revision), saved: JSON.stringify(value) });
@@ -107,13 +114,14 @@ async function prepareBatch(book) {
   return { body, snapshots, generation };
 }
 
-export async function saveBook(book, request = api) {
+export async function saveBook(book, request = api, beforeSend) {
   if (book.running) return book.running;
   if (book.generation === book.confirmed && !book.batch) return;
   if (book.conflict) throw new Error('Preserve seu rascunho em uma cópia antes de recarregar.');
   book.running = (async () => {
     try {
       book.batch ||= await prepareBatch(book);
+      if (beforeSend) await beforeSend();
       const batch = book.batch;
       const result = await request(`/api/notebooks/${book.id}/save`, batch.body);
       for (const [index, kind] of ['pages', 'tasks'].entries()) {

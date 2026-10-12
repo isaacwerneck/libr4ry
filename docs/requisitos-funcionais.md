@@ -34,6 +34,8 @@ O MVP inicial somente privado foi aprovado. Publicação e whitelist de destinat
 
 RF-M04/M05 exigem especificação de chaves e recuperação antes do desenvolvimento. Não adiar criptografia mantendo conteúdo legível no MVP.
 
+Revisão aprovada de RF-M08/M09: edição visual padrão, sem sintaxe aparente; fonte Markdown é acesso avançado. Seleção permite formatação/fonte/tinta/tamanho diretamente, com undo/redo; notas abertas sem edição não têm a fonte regravada. Edição visual normaliza sintaxe/espaços. Ponta da folha aceita clique/arraste; Ctrl+roda e Ctrl+arraste esquerdo manipulam somente o enquadramento do caderno. Capa/contracapa não criam páginas falsas. Personalização separada inclui cor e acabamento cifrados. Falha de exportação visual conserva o buffer e apresenta pendência, sem alegar salvamento. Implementação e limites em [passo a passo](passo-a-passo.md#entrega-da-revisão-integrada-do-caderno--10102026).
+
 ### Estado de implementação local — 07/10/2026
 
 Senha de conteúdo separada foi aprovada e integrada a cadastro/login/desbloqueio. Ela protege a chave raiz no navegador, não é transmitida nem persistida e é exigida novamente após recarregar. RF-M05 usa essa mesma senha em outro navegador; não há código de recuperação ou recuperação administrativa se ela for esquecida.
@@ -43,6 +45,8 @@ O fluxo de cadernos/páginas, Markdown/prévia, autosave, reabertura, versões/r
 RF-M03 (recuperação de login) continua pendente, assim como rascunhos criptografados persistentes após crash e validação final da divisão de blocos Markdown. Não considerar todos os critérios de conclusão do MVP atendidos só porque o fluxo principal funciona. Limites locais iniciais: 500 páginas, 100 metas e 50 versões por página; não há garantia de período de retenção.
 
 ## 3. Condições transversais de aceite
+
+Atualização de 10/10/2026: snapshots cifrados persistentes e recuperação foram implementados, com limites de origem/porta, quota e transações documentados. Organização básica permite várias estantes por caderno, favoritos, recentes e busca local de metadados; tamanho inicial é selecionável na criação. A matriz atual de entregas e pendências está em [passo-a-passo](passo-a-passo.md#plano-original-controle-de-escopo--10102026). O estado de 07/10 acima é histórico; RF-M03, backup/restauração operacional e validação final continuam pendentes.
 
 - Autorização verifica proprietário em cada operação; IDs enviados pelo cliente não dão acesso por si só.
 - Conteúdo privado não aparece em respostas de terceiros, URLs, logs, métricas operacionais ou relatórios de erro.

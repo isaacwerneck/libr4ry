@@ -1537,3 +1537,62 @@ dialog .button {
   margin-top:16px;
   color:#526938
 }
+
+.collection-tools {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:end;
+  gap:16px;
+}
+.collection-tools label {
+  display:grid;
+  gap:8px;
+  font-size:12px;
+  color:var(--muted);
+  min-width:0;
+}
+.collection-search { flex:1 1 260px; }
+.collection-tools input,.collection-tools select {
+  width:100%;
+  min-height:44px;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:var(--paper,#fffaf0);
+  color:var(--ink);
+}
+#initial-size-field select { min-height:44px; padding:10px; border:1px solid var(--line); border-radius:6px; background:transparent; color:var(--ink); }
+.collection-help,.collection-shelves {
+  font-size:12px;
+  line-height:1.6;
+  color:var(--muted);
+  overflow-wrap:anywhere;
+}
+.collection-help { margin:14px 0 20px; }
+.collection-entry { min-width:0; }
+.collection-entry .notebook-card { width:100%; }
+.collection-entry .book-cover { background:#70513c; }
+.collection-entry .book-cover[data-cover="clay"] { background:#985d45; }
+.collection-entry .book-cover[data-cover="slate"] { background:#435362; }
+.collection-entry .book-cover[data-finish="leather"] { background-image:radial-gradient(#fff4dd0a 1px, transparent 1px); background-size:5px 5px; }
+.collection-entry .book-cover[data-finish="cloth"] { background-image:repeating-linear-gradient(0deg, #fff4dd0d 0 1px, transparent 1px 4px), repeating-linear-gradient(90deg, #211b181a 0 1px, transparent 1px 4px); }
+.collection-actions { display:flex; align-items:center; gap:8px; margin-top:8px; }
+.collection-actions .text-button { min-height:44px; }
+.collection-favorite {
+  min-width:44px;
+  min-height:44px;
+  border:0;
+  border-radius:50%;
+  background:transparent;
+  color:#70513c;
+  font-size:24px;
+  transition:background .15s;
+}
+.collection-favorite:hover,.collection-favorite:focus-visible { background:#70513c12; }
+.collection-shelves { margin:0 0 8px; }
+.collection-save-state { padding:12px 0; color:#774327; font-size:13px; }
+.collection-save-state .text-button { display:block; min-height:44px; }
+@media(max-width:480px) {
+  .collection-tools label { flex:1 1 100%; }
+  .notebook-grid { grid-template-columns:minmax(0,1fr); }
+}

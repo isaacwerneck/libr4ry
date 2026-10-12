@@ -1,5 +1,29 @@
+import { plainStudyText } from './notebook-writing.js';
+
 export const PAGE_SIZES = Object.freeze({ small: 24, medium: 36, large: 48 });
 export const FONT_SIZES = Object.freeze([14, 16, 18, 20, 24]);
+
+export function visiblePages(pages, selected, spread) {
+  const index = pages.indexOf(selected);
+  if (index < 0) return [];
+  return spread ? bookOpening(pages, selected).filter(Boolean) : [selected];
+}
+
+// A primeira frente fica à direita; o verso seguinte fica à esquerda.
+export function bookOpening(pages, selected) {
+  const index = pages.indexOf(selected);
+  if (index < 0) return [null, null];
+  const left = index % 2 ? index : index - 1;
+  return [pages[left] || null, pages[left + 1] || null];
+}
+
+export function adjacentOpening(pages, selected, direction) {
+  const index = pages.indexOf(selected);
+  if (index < 0) return null;
+  const left = index % 2 ? index : index - 1;
+  const next = left + direction * 2;
+  return next < -1 || next >= pages.length ? null : pages[Math.max(0, next)];
+}
 
 export function pageCapacity(size, fontSize) {
   if (!Object.hasOwn(PAGE_SIZES, size) || !FONT_SIZES.includes(fontSize)) {
@@ -52,6 +76,32 @@ export function countLines(text, size, fontSize) {
     total + Math.max(1, Math.ceil(Array.from(line.replaceAll('\t', '  ')).length / columns)), 0);
 }
 
+export function protectedBlocks(text, tokens) {
+  const offsets = [0];
+  for (const line of text.match(/[^\n]*\n|[^\n]+$/g) || []) offsets.push(offsets.at(-1) + line.length);
+  return tokens.filter(token => token.level === 0 && token.map
+    && ['fence', 'code_block', 'bullet_list_open', 'ordered_list_open', 'blockquote_open', 'table_open'].includes(token.type))
+    .map(token => [offsets[token.map[0]], offsets[token.map[1]] ?? text.length]);
+}
+
+export function planPageEdit(text, size, fontSize, totalPages, ranges = []) {
+  const boundaries = splitPages(text, size, fontSize);
+  const chunks = [];
+  let start = 0;
+  let offset = 0;
+  for (const chunk of boundaries) {
+    offset += chunk.length;
+    let end = offset;
+    const block = ranges.find(([from, to]) => end > from && end < to);
+    if (block) end = block[0] > start ? block[0] : block[1];
+    if (end > start) { chunks.push(text.slice(start, end)); start = end; }
+  }
+  if (start < text.length) chunks.push(text.slice(start));
+  if (!chunks.length) chunks.push('');
+  const limited = totalPages + chunks.length - 1 > 500;
+  return { chunks: limited ? [text] : chunks, limited };
+}
+
 export function countWords(text) {
-  return (text.match(/[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*/gu) || []).length;
+  return (plainStudyText(text).match(/[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*/gu) || []).length;
 }
