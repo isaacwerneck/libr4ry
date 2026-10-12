@@ -373,7 +373,11 @@ function renderCollection() {
   $('shelf-list').replaceChildren();
   for (const shelf of [{ key: 'all', name: 'Todos', count: books.length }, ...collectionShelves(books)]) {
     const value = shelf.key === 'all' ? 'all' : 'shelf:' + shelf.key;
-    const tab = button(`${shelf.name} · ${shelf.count}`, 'shelf-button', () => { filter.value = value; renderCollection(); });
+    const tab = button(`${shelf.name} · ${shelf.count}`, 'shelf-button', () => {
+      filter.value = value;
+      renderCollection();
+      $('shelf-list').querySelector('[aria-pressed="true"]').focus();
+    });
     tab.setAttribute('aria-pressed', String(filter.value === value));
     $('shelf-list').append(tab);
   }

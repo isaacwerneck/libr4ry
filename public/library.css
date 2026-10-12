@@ -47,7 +47,7 @@ dialog::backdrop { background: #2a1b1466; backdrop-filter: blur(3px); }
 .illustration-books i:nth-child(5) { height: 126px; background: #b19065; }
 .illustration-shelf { height: 18px; border-radius: 3px; background: linear-gradient(#c79b67, #9c7048 50%, #63422b 52%, #735138); box-shadow: 0 12px 18px #34231566, inset 0 1px 0 #ffdfac66; }
 .illustration-note { position: absolute; right: -8px; bottom: -42px; padding: 16px 20px; font: italic 16px var(--serif); color: #765334; background: #f6e5c3; box-shadow: 0 4px 7px #35211533; transform: rotate(4deg); }
-.auth-panel { background: #faf0dc; padding: 46px clamp(24px, 4vw, 72px); display: flex; align-items: center; justify-content: center; box-shadow: -10px 0 28px #37241726; }
+.auth-panel { background: #faf0dc; padding: 32px clamp(24px, 4vw, 72px); display: flex; align-items: center; justify-content: center; box-shadow: -10px 0 28px #37241726; }
 .auth-panel-inner { width: min(100%, 380px); margin: 0; }
 .auth-panel h2 { font: 400 clamp(29px, 3vw, 40px)/1.15 var(--serif); letter-spacing: -.8px; margin: 16px 0; }
 .auth-panel p { line-height: 1.65; }
@@ -68,7 +68,7 @@ body:not(.studying) .library-header { position: relative; inset: auto; width: au
 .library-header .nav-button:hover { background: #f3dfbd14; }
 .library-header .nav-button.active { background: #ead6b9; color: #503627; }
 .library-header .nav-count { margin-left: 5px; background: #fff7e51a; color: inherit; }
-.library-header .sidebar-bottom { position: static; border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.library-header .sidebar-bottom { position: static; border: 0; margin: 0; padding: 0; display: flex; flex-direction: row; align-items: center; gap: 14px; }
 .library-header .connection-label { color: #d8bf9c; font-size: 9px; margin: 0; }
 .library-header .profile-row { gap: 12px; margin: 0; padding: 0; }
 .account-link { display: flex; align-items: center; gap: 9px; color: #f5e6ca; background: none; border: 0; font-size: 12px; padding: 0; }
@@ -78,16 +78,16 @@ body:not(.studying) .library-header { position: relative; inset: auto; width: au
 body:not(.studying) .main { margin: 0; width: 100%; min-height: calc(100dvh - 86px); background: transparent; }
 body:not(.studying) .topbar { height: 66px; border: 0; padding: 0 clamp(20px, 5vw, 80px); color: #f8e8cb; background: #69492e26; }
 body:not(.studying) .breadcrumb, body:not(.studying) .date-label { color: #f5e3c5; }
-.home-view { min-height: calc(100dvh - 152px); max-width: 1140px; margin: auto; padding: 32px 40px; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+.home-view { min-height: calc(100dvh - 152px); max-width: 1140px; margin: auto; padding: 24px 40px; display: flex; flex-direction: column; justify-content: center; text-align: center; }
 .home-intro .eyebrow { color: #ffe5bb; }
-.home-intro h1 { font: 400 clamp(38px, 4.6vw, 62px)/1.05 var(--serif); color: #fff0d2; letter-spacing: -1.6px; margin: 18px 0; text-shadow: 0 2px 1px #44301d26; }
+.home-intro h1 { font: 400 clamp(38px, 4.2vw, 52px)/1.05 var(--serif); color: #fff0d2; letter-spacing: -1.6px; margin: 18px 0; text-shadow: 0 2px 1px #44301d26; }
 .home-intro h1 em { font-weight: 400; color: #f3dbaf; }
 .home-intro p { color: #fff0d4; font-size: 14px; margin-bottom: 30px; line-height: 1.6; }
 .home-destinations { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
 .destination { position: relative; display: flex; flex-direction: column; align-items: flex-start; text-align: left; min-width: 0; padding: 20px 26px 30px; border: 1px solid #d3b78c; border-radius: 9px 14px 14px 9px; background: #f6e6c9; color: #483126; box-shadow: inset 5px 0 0 #d4bb92, inset 7px 0 0 #fff3d8, 0 4px 0 #c1a47b, 0 12px 20px #3f291f26; transition: transform 230ms var(--library-ease), box-shadow 230ms var(--library-ease); }
 .destination:hover { transform: translateY(-5px) rotate(-.5deg); box-shadow: inset 5px 0 0 #d4bb92, inset 7px 0 0 #fff3d8, 0 4px 0 #c1a47b, 0 18px 24px #3f291f33; }
 .destination:active { transform: translateY(1px); }
-.destination-art { display: flex; width: 100%; justify-content: center; height: 100px; margin-bottom: 17px; }
+.destination-art { display: flex; width: 100%; justify-content: center; height: 85px; margin-bottom: 17px; }
 .destination-art svg { height: 100%; width: 120px; fill: #b890604d; stroke: #755333; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .destination-shelves { background: #eedbb6; }
 .destination-social { background: #f2e2cb; }

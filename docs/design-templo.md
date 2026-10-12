@@ -1,8 +1,18 @@
 # Direção artística — refúgio pessoal de estudo
 
-Consolidação das respostas do proprietário e pesquisa aplicada, atualizada em 10/10/2026. Este documento distingue direção aprovada, recomendações e funcionalidades entregues. O editor já tem um primeiro protótipo de caderno; o restante ainda usa a composição editorial anterior. O roteiro de implementação está em [passo-a-passo.md](passo-a-passo.md).
+[← Documentação](README.md) · [Guia de uso atual](uso.md) · [Histórico de implementação](historico-implementacao.md)
+
+Consolidação das respostas do proprietário e pesquisa aplicada, atualizada em 12/10/2026. Este documento distingue direção aprovada, recomendações e funcionalidades entregues. Caderno e portal agora compartilham a identidade de madeira e papel; entradas anteriores registram o histórico. O roteiro de implementação está em [passo-a-passo.md](passo-a-passo.md).
 
 ## Decisões complementares e exemplos visuais
+
+### Portal de biblioteca — 12/10/2026
+
+Entrada em duas superfícies: convite sobre madeira ilustrada e formulário sobre papel claro. Livros e prateleira são composição própria em CSS; ícones dos três caminhos são SVG locais originais. Paleta marrom/creme, luz quente e acabamento discreto conservam a direção do caderno, sem reproduzir Minecraft. No celular, o convite se reduz e os destinos ficam em uma coluna; controles preservam rótulos/foco e movimento reduzido elimina elevação das capas/cartões.
+
+Início após desbloqueio oferece Perfil, Estantes e Social; retomada fica explícita. Estantes usam capas personalizadas, prateleiras discretas, busca/favoritos e grupos com seleção por teclado. Perfil contém dados reais e métricas da biblioteca desbloqueada. Feed/pessoas/conversas têm estados de construção claros e controles indisponíveis, sem conteúdo social fictício ou publicação automática. A navegação utiliza histórico do navegador, respeitando bloqueio de saída quando o editor não consegue sincronizar texto visual.
+
+Escopo alcança index.html, app.js, library.css e registro de asset no servidor; não troca editor, banco, formato privado ou dependências. Integração SQL/API ampliada testa reentrada/desbloqueio e reabertura de capas/estantes/notas. Build, sintaxe e 45 testes aprovados. Navegador ensaiou rotas, duas páginas escritas e filtros; 390×844 sem transbordamento horizontal da home. Não declarar social funcional, recuperação de conta ou implantação pública concluídos.
 
 ### Guarda vazia durante a virada — 12/10/2026
 

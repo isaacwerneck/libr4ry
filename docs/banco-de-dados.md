@@ -1,5 +1,7 @@
 # Desenho do banco SQL — Library4
 
+[← Documentação](README.md) · [Configuração do ambiente](desenvolvimento.md)
+
 O modelo conceitual abaixo orienta o produto. A implementação inicial foi aplicada localmente: a fonte executável e exata é [db/001-foundation.sql](../db/001-foundation.sql). Referências de produto: [proposta](proposta.md) e [requisitos](requisitos-funcionais.md).
 
 ## Implementação local atual
@@ -208,4 +210,4 @@ Confirmar PostgreSQL/versão, autenticação, formato criptográfico, recuperaç
 
 Teste obrigatório: tentar associar caderno ao keyset de outra conta; mover versão para página errada; apontar para revisão inexistente; repetir mutação; editar com revisão antiga. Também inspecionar payloads, anexos e backup para ausência de conteúdo privado legível.
 
-Não há DDL executado nesta entrega. Referências de sintaxe/restrições: [PostgreSQL — Constraints](https://www.postgresql.org/docs/current/ddl-constraints.html). Segurança de armazenamento/chaves: [OWASP — Cryptographic Storage](https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html).
+As tabelas conceituais desta seção não são uma nova migração; a implementação atual é definida por [db/001-foundation.sql](../db/001-foundation.sql). Referências de sintaxe/restrições: [PostgreSQL — Constraints](https://www.postgresql.org/docs/current/ddl-constraints.html). Segurança de armazenamento/chaves: [OWASP — Cryptographic Storage](https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html).

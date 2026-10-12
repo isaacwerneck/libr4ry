@@ -1,5 +1,7 @@
 # Requisitos funcionais — Library4
 
+[← Documentação](README.md) · [Guia de uso atual](uso.md)
+
 Base: [proposta](proposta.md). Status: especificação para implementação, não checklist de funcionalidades existentes. As sugestões de política permanecem em aberto até serem confirmadas.
 
 ## 1. Atores e fronteiras

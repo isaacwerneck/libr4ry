@@ -14,7 +14,7 @@ O progresso deve ser visível sem transformar estudo em competição obrigatóri
 
 ## 2. Experiência inicial e identidade
 
-Direção revisada: depois de login e desbloqueio, abrir a Home com perfil, coleção e acesso social; retomar diretamente um caderno aberto nas últimas 24 horas. Definir o marco temporal e a sincronização entre dispositivos. No primeiro acesso, oferecer a criação do primeiro caderno, sem tutorial obrigatório. Recursos sociais continuam sujeitos ao escopo da seção 12.
+Direção vigente: depois de login e desbloqueio, abrir a Home com Perfil, Estantes e Social. Retomar um caderno por ação explícita quando houver uma posição recente válida, sem abertura automática. No primeiro acesso, oferecer a criação do primeiro caderno, sem tutorial obrigatório. Recursos sociais continuam sujeitos ao escopo da seção 12. Consulte o [guia de uso](uso.md) para a interface atual.
 
 A [direção artística consolidada](design-templo.md) orienta a próxima revisão: mesa de madeira, caderno físico central, conforto, personalização e progresso sem pressão. Pixel art é uma alternativa a comparar. O documento distingue decisões de funcionamento ainda abertas e não representa funcionalidades entregues.
 

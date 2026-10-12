@@ -1,5 +1,16 @@
 # Passo a passo da reconstrução — Library4
 
+Este documento reúne andamento e critérios históricos. Para instruções atuais, consulte o [guia de uso](uso.md); para executar e verificar o projeto, consulte [configuração e desenvolvimento](desenvolvimento.md). O [índice](README.md) organiza toda a documentação.
+
+## Entrega: portal e uso privado real — 12/10/2026
+
+1. Reconstruídos login/cadastro e navegação na paleta de madeira/papel; Início após desbloqueio com Perfil, Estantes e Social. Retomada explícita e histórico do navegador preservados.
+2. Estantes mantêm criação, busca, favoritos, organização e reabertura; grupos têm filtros diretos acessíveis. Perfil usa dados reais e métricas; Social oferece interfaces de feed/pessoas/conversas sinalizadas como futuras.
+3. Preservados banco, sessão, autosave e envelopes privados existentes; integração ampliada cobre login incorreto, sair/entrar, desbloqueio incorreto e recuperação de notas, capas e estantes.
+4. Build, sintaxe e 45 testes aprovados, sem skips; prévia ensaiada com criação, escrita em duas páginas, filtro de estante, rotas e layout em 390×844.
+
+Próximas etapas continuam separadas: recuperação de conta/chaves, backup operacional e implantação; depois backend social, amizades, compartilhamento explícito e mensagens. A interface pronta não significa que essas integrações estejam entregues. Detalhes em [portal de biblioteca](design-templo.md#portal-de-biblioteca--12102026).
+
 ## Correção entregue: capa e folhas sem salto — 11/10/2026
 
 1. Capa/contracapa passam a acompanhar geometria da primeira/última folha, recalculada em zoom, resize e capacidade; removidos largura/proporção independentes.
