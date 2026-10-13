@@ -35,8 +35,8 @@ test('SQL/API: propriedade, histórico, idempotência, conflito e dados privados
   }
 
   async function register(id, ownKeyset) {
-    const contentPassword = randomBytes(24).toString('base64url');
-    const password = randomBytes(24).toString('base64url');
+    const contentPassword = randomBytes(3).toString('base64url');
+    const password = randomBytes(6).toString('base64url');
     const root = await createRoot(contentPassword, id, ownKeyset);
     roots.set(id, root.key);
     accounts.set(id, { password, contentPassword });

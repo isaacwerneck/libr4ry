@@ -149,11 +149,10 @@ html:has(body.studying) { overflow: clip; }
 }
 .studying .paper-stage { padding-bottom: 12px; }
  .studying .paper-stage > .paper { border-radius: 5px 18px 18px 5px; }
-.studying .paper::before { left: 52px; top: 102px; bottom: 64px; width: var(--paper-stroke); background: #b96d4c40; pointer-events: none; }
+.studying .paper:not(.book-face)::before { display: none; }
 .studying .paper::after { content: ''; position: absolute; top: 18px; bottom: 18px; left: -14px; border-left: 1px dashed #bd997355; pointer-events: none; }
 .studying .paper-top { font-size: 10px; letter-spacing: 1px; padding-bottom: 18px; border-color: #bba17b66; border-bottom-width: var(--paper-stroke); }
 .studying .paper-bottom { border-top-width: var(--paper-stroke); }
-.studying .paper-top > span:last-child { letter-spacing: 2px; }
 .studying .page-title { font-size: 28px; margin: 26px 0; line-height: 1.4; padding: 0; color: var(--ink); }
 .studying .page-title::placeholder, .studying textarea::placeholder { color: #806c55; }
 .studying button:focus-visible, .studying input:focus-visible, .studying select:focus-visible, .studying textarea:focus-visible, .studying .markdown:focus-visible { outline-color: #805336; }
@@ -179,7 +178,6 @@ html:has(body.studying) { overflow: clip; }
   border-radius: 14px 3px 3px 14px;
   box-shadow: -8px 0 0 #50392d, -10px 1px 0 #332820, -3px 4px 0 #eee0c3, -5px 6px 0 #c9b692, -7px 8px 0 #eee0c3, -10px 13px 0 #50392d, -12px 15px 0 #332820, -18px 24px 32px #271a1340;
 }
-.spread-mode .paper::before { left: 38px; }
 .spread-mode .paper::after { display: none; }
 .spread-mode .paper[data-side="right"] { box-shadow: 3px 4px 0 #eee0c3, 5px 6px 0 #c9b692, 7px 8px 0 #eee0c3, 12px 13px 0 #50392d, 14px 15px 0 #332820, 18px 24px 32px #271a1340; }
 .spread-end { margin: 8px 0 0; padding: 48px; display: grid; place-items: center; color: #dcc5a5; background: #50392d; border-radius: 3px 14px 14px 3px; font-size: 13px; box-shadow: 10px 13px 0 #332820; }
@@ -420,8 +418,6 @@ body.studying .book-face[data-face="back"] { border-radius: 18px 7px 7px 18px; p
   .notebook-hud > summary { padding-inline: 8px; }
   .tool-label { display: none; }
   .studying .paper { padding: 26px 20px 24px 34px; }
-  .studying .paper::before { left: 20px; }
-  .studying .paper-top > span:last-child { display: none; }
   .studying .page-title { font-size: 22px; }
   .studying .page-navigation { gap: 10px; padding-inline: 10px; }
   .studying .page-navigation .text-button { font-size: 25px; }

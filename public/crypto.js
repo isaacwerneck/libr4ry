@@ -18,8 +18,8 @@ export function importKey(secret) {
 }
 
 export async function passwordKey(password, kdf) {
-  if (typeof password !== 'string' || password.length < 12 || password.length > 128) {
-    throw new Error('Use uma senha de conteúdo entre 12 e 128 caracteres.');
+  if (typeof password !== 'string' || password.length < 4 || password.length > 128) {
+    throw new Error('Use uma senha de conteúdo entre 4 e 128 caracteres.');
   }
   if (kdf?.name !== 'PBKDF2' || kdf.hash !== 'SHA-256' || kdf.iterations !== 600000
     || typeof kdf.salt !== 'string' || fromBase64(kdf.salt).length !== 16) {

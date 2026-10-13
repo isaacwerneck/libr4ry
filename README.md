@@ -1,6 +1,8 @@
 # Library4
 
-Uma biblioteca pessoal para escrever, organizar ideias e voltar aos seus estudos. O Library4 combina cadernos digitais com uma interface aconchegante de madeira e papel, capas personalizáveis e escrita visual.
+Uma biblioteca pessoal para escrever, organizar ideias e voltar aos seus estudos. O Library4 combina cadernos digitais com uma interface aconchegante de madeira e papel, capas personalizáveis e escrita visual. Controles com relevo retrô e cursor pixelado para mouse complementam texturas próprias em CSS e SVG; a direção visual está em [Direção artística](docs/design-templo.md). No desktop, a entrada e o portal ficam enquadrados na janela, com rolagem interna apenas para conteúdo excedente; em telas de até 720 px, a rolagem da página permanece disponível.
+
+A entrada ilustrada mostra apenas a marca e a estante. Menus e botões usam rótulos diretos, sem slogans ou setas decorativas; avisos de privacidade, salvamento e funções indisponíveis permanecem visíveis.
 
 ## O que você pode fazer
 
@@ -37,7 +39,7 @@ Para configurar uma instância PostgreSQL local pelo script do projeto, consulte
 ## Começar a usar
 
 1. Crie uma conta e defina sua **senha de conteúdo**, separada da senha de login.
-2. Entre e desbloqueie sua biblioteca. Na home, escolha **Minhas estantes**.
+2. Entre e desbloqueie sua biblioteca. Na home, escolha **Estantes**.
 3. Use **Novo caderno** para definir nome, matéria e estantes.
 4. Abra o caderno, escreva nas folhas e use as ferramentas de texto e personalização.
 5. Aguarde o estado **Salvo** antes de encerrar. Ao voltar, entre e desbloqueie novamente para acessar suas notas.

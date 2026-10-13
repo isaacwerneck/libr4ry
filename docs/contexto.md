@@ -1,6 +1,16 @@
 # Contexto do projeto
 
+Folhas vigentes (13/10/2026): remover o rótulo decorativo LIBRARY4 / NOTAS do cabeçalho, conservando o número da página também no celular. Título integrado ao papel, sem retângulo/relevo de campo, conservando foco de edição. Remover a linha vertical decorativa da margem das folhas e faces da virada; manter pautas, dimensões e molduras das capas.
+
+Texto vigente (13/10/2026): remover slogans, frases decorativas, rótulos redundantes e setas dos botões. Login ilustrado contém somente marca libr4ry maior acima da estante, com livros sem texto. Portal usa destinos Perfil/Estantes/Social e títulos diretos; conservar avisos de proteção, erros, salvamento e indisponibilidade. Navegação por páginas e desfazer/refazer usam palavras no lugar de setas.
+
+Enquadramento vigente (13/10/2026): acima de 720 px, login/cadastro e portal ocupam 100dvh sem rolagem da página; cabeçalhos permanecem fixos e espaços/títulos se adaptam à altura. Conteúdo variável excedente continua acessível por rolagem interna em formulários, painéis e coleção. Em até 720 px manter rolagem de página das telas do portal e entrada. Caderno conserva zoom/pan e comportamento próprio existente, sem reduzir dimensões lógicas das folhas.
+
+Direção vigente (13/10/2026): preservar marrons/creme e conforto de biblioteca rústica; incorporar relevo retrô nos controles, abas pressionadas, molduras discretas e cursor pixelado próprio para mouse. CSS + SVG locais detalham madeira, papel, couro e livros do login; manter edição moderna, acessibilidade, dimensões/paginação, materiais personalizados e proteção dos dados. Referências são inspiração, sem copiar assets. Sem dependências novas; documentação em docs/design-templo.md.
+
 [← Documentação](README.md)
+
+Senhas vigentes (13/10/2026): mínimo de 8 caracteres na conta e 4 na senha de conteúdo compartilhada pelos cadernos; máximo de 128 em ambas. Cadastro, login, confirmação e desbloqueio seguem os mesmos limites. Manter scrypt, PBKDF2 e AES-GCM existentes. Limpeza solicitada do banco local exclui dados de contas e cadernos, preservando schema e registro de migração.
 
 Decisões vigentes aparecem primeiro; entradas anteriores preservam o histórico e podem ter sido substituídas. Para instruções da interface atual, consulte o [guia de uso](uso.md).
 

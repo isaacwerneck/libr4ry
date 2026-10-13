@@ -13,6 +13,8 @@ const assets = new Map([
   ['/index.html', ['public/index.html', 'text/html']],
   ...['styles.css', 'library.css', 'notebook.css', 'notebook-motion.js', 'notebook-controls.js', 'notebook-preferences.js', 'drafts.js', 'notebook-viewport.js', 'edit-history.js', 'collection.js', 'app.js', 'crypto.js', 'pagination.js', 'storage.js'].map(file =>
     [`/${file}`, [`public/${file}`, file.endsWith('.css') ? 'text/css' : 'text/javascript']]),
+  ...['wood-grain.svg', 'material-grain.svg', 'retro-arrow.svg', 'retro-hand.svg'].map(file =>
+    [`/${file}`, [`public/${file}`, 'image/svg+xml']]),
   ['/notebook-writing.js', ['public/notebook-writing.js', 'text/javascript']],
   ['/notebook-reminder.js', ['public/notebook-reminder.js', 'text/javascript']],
   ['/cover-design.js', ['public/cover-design.js', 'text/javascript']],

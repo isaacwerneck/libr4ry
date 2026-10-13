@@ -202,7 +202,7 @@ function showBookFace(face, revealTools = true) {
   coverEditor.render();
   if (entering && !reading && revealTools) { closeNotebookHud(); $('notebook-hud').open = true; }
   if (!face) return;
-  openCover.textContent = face === 'front' ? 'Abrir caderno →' : '← Voltar às anotações';
+  openCover.textContent = face === 'front' ? 'Abrir caderno' : 'Voltar às anotações';
   coverFace.dataset.face = face;
   $('page-total').textContent = face === 'front' ? 'Capa' : 'Contracapa';
   $('previous-page').disabled = face === 'front'; $('next-page').disabled = face === 'back';
@@ -315,7 +315,6 @@ function showView(view, record = true) {
 
 function renderPortal() {
   const user = session?.user || { display_name: 'Prévia local', email: 'Interface de demonstração · sem conta real' };
-  $('home-greeting').textContent = `Bem-vindo, ${user.display_name}. Um cantinho para as suas ideias.`;
   $('profile-display-name').textContent = user.display_name;
   $('profile-email').textContent = user.email;
   $('profile-avatar').textContent = user.display_name.slice(0, 2).toUpperCase();
@@ -323,7 +322,7 @@ function renderPortal() {
   $('profile-shelves-count').textContent = collectionShelves(books).length;
   const resumed = books.filter(book => recentPosition(book)).sort((a, b) => b.position.at - a.position.at)[0];
   $('continue-notebook').hidden = !resumed;
-  $('continue-notebook').textContent = resumed ? `Continuar de onde parei · ${resumed.title} →` : '';
+  $('continue-notebook').textContent = resumed ? `Continuar de onde parei · ${resumed.title}` : '';
   $('continue-notebook').onclick = resumed ? () => openBook(resumed) : null;
   renderProgress();
 }
@@ -385,9 +384,7 @@ function renderCollection() {
   $('notebook-grid').replaceChildren();
   $('empty-library').hidden = books.length > 0;
   $('empty-collection').hidden = !books.length || selected.length > 0;
-  $('collection-result').textContent = books.length ? `${selected.length} de ${books.length} cadernos · busca na coleção desbloqueada` : '';
   $('notebook-count').textContent = books.length;
-  $('collection-count').textContent = '/ ' + String(books.length).padStart(2, '0');
   selected.forEach(book => {
     const index = books.indexOf(book);
     const entry = document.createElement('article');
@@ -412,14 +409,12 @@ function renderCollection() {
     title.textContent = book.title;
     const subject = document.createElement('span');
     subject.className = 'cover-subject';
-    subject.textContent = book.subject || 'Ideias e descobertas';
+    subject.textContent = book.subject || '';
     const bottom = document.createElement('div');
     bottom.className = 'cover-bottom';
     const pageCount = document.createElement('span');
     pageCount.textContent = `${book.pages.length} páginas`;
-    const arrow = document.createElement('span');
-    arrow.textContent = '↗';
-    bottom.append(pageCount, arrow);
+    bottom.append(pageCount);
     cover.append(number, title, subject, bottom);
     const meta = document.createElement('div');
     meta.className = 'card-meta';
@@ -819,10 +814,9 @@ $('auth-toggle').addEventListener('click', () => {
   $('content-password-fields').hidden = !signingUp;
   $('content-password-fields').disabled = !signingUp;
   $('auth-form').elements.password.autocomplete = signingUp ? 'new-password' : 'current-password';
-  $('auth-heading').textContent = signingUp ? 'Uma biblioteca só sua.' : 'Entre, a casa é sua.';
-  $('auth-description').textContent = signingUp ? 'Crie sua conta e guarde suas primeiras ideias.' : 'Seus cadernos estão esperando por você.';
+  $('auth-heading').textContent = signingUp ? 'Criar conta' : 'Entrar';
   $('auth-error').textContent = '';
-  $('auth-submit').textContent = signingUp ? 'Criar minha conta ↗' : 'Entrar ↗';
+  $('auth-submit').textContent = signingUp ? 'Criar minha conta' : 'Entrar';
   $('auth-toggle').textContent = signingUp ? 'Já tenho conta. Entrar' : 'Primeira vez? Crie sua conta';
 });
 $('auth-form').addEventListener('submit', async event => {
@@ -857,7 +851,7 @@ $('auth-form').addEventListener('submit', async event => {
   finally {
     $('auth-submit').disabled = false; $('auth-toggle').disabled = false;
     $('auth-form').setAttribute('aria-busy', 'false');
-    $('auth-submit').textContent = signingUp ? 'Criar minha conta ↗' : 'Entrar ↗';
+    $('auth-submit').textContent = signingUp ? 'Criar minha conta' : 'Entrar';
   }
 });
 function notebookDialog(book) {
@@ -865,8 +859,8 @@ function notebookDialog(book) {
   const form = $('notebook-form');
   form.reset();
   $('notebook-form-error').textContent = '';
-  $('notebook-dialog').querySelector('h2').textContent = book ? 'Ajuste seu caderno.' : 'Abra um novo capítulo.';
-  form.querySelector('[type=submit]').textContent = book ? 'Guardar alterações ↗' : 'Criar caderno ↗';
+  $('notebook-dialog').querySelector('h2').textContent = book ? 'Editar caderno' : 'Novo caderno';
+  form.querySelector('[type=submit]').textContent = book ? 'Guardar alterações' : 'Criar caderno';
   if (book) for (const field of ['title', 'subject', 'tags']) {
     form.elements[field].value = field === 'tags' ? book.tags.join(', ') : book[field];
   }
@@ -1607,7 +1601,7 @@ setInterval(() => {
 const previewLink = document.createElement('a');
 previewLink.href = '/?preview=1';
 previewLink.className = 'text-button preview-link';
-previewLink.textContent = 'Conhecer o caderno sem criar conta →';
+previewLink.textContent = 'Conhecer o caderno sem criar conta';
 $('auth-form').after(previewLink);
 if (preview) {
   const previewLabel = document.createElement('div');
@@ -1618,7 +1612,6 @@ if (preview) {
   $('workspace').hidden = false;
   $('profile-name').textContent = 'Prévia local';
   $('avatar').textContent = 'L4';
-  document.querySelector('.connection-label').textContent = 'Prévia sem persistência';
   books.push({ id: crypto.randomUUID(), title: 'Meu caderno de estudo', subject: 'Design', tags: [], tasks: [],
     pages: [newPage('# A ideia que ficou\n\nUm sábado tranquilo, um livro aberto e algumas coisas que quero guardar.\n\n{{hand;rust;24|Entender é fazer conexões.}}\n\n## O que aprendi hoje\n\n- Uma boa ideia fica mais clara quando consigo explicá-la.\n- Exemplos aproximam o que leio do que já conheço.\n- Posso voltar a estas notas, no meu tempo.\n\n> Não preciso terminar tudo hoje. Só deixar uma ideia mais nítida.\n\n## Para experimentar\n\nSelecionar um trecho e escolher sua tinta. Mudar o papel. Virar a folha e continuar.'),
       newPage('# Entre uma ideia e outra\n\nConhecimento também é perceber o que mudou no meu jeito de pensar.\n\n{{serif;blue;20|Uma página de cada vez.}}\n\n## Minha próxima pergunta\n\nComo posso usar o que aprendi em algo pequeno, hoje?\n\n- Anotar uma conexão.\n- Testar um exemplo.\n- Guardar uma dúvida para amanhã.\n\n## Um espaço para continuar\n\nEste caderno acompanha o meu ritmo. A folha segue abaixo da tela; há lugar para o que ainda vou descobrir.')] });

@@ -2,6 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { splitPages, pageCapacity, countLines, countWords, visiblePages, bookOpening, adjacentOpening, planPageEdit } from '../public/pagination.js';
 import { makeSecret, importKey, seal, open, createRoot, unlockRoot } from '../public/crypto.js';
+import { credentials } from '../lib/validation.js';
+
+test('senha da conta aceita 8 caracteres e rejeita valores fora dos limites', () => {
+  const body = { email: 'conta@example.com', password: '12345678' };
+  assert.equal(credentials(body).password, body.password);
+  for (const password of ['1234567', 'a'.repeat(129), null]) {
+    assert.throws(() => credentials({ ...body, password }));
+  }
+  assert.equal(credentials({ ...body, password: 'a'.repeat(128) }).password.length, 128);
+});
 
 test('dupla de folhas preserva páginas e seleção sem inventar uma última página', () => {
   const pages = [{ content: 'primeira' }, { content: 'segunda' }, { content: 'última' }];
@@ -77,7 +87,10 @@ test('conteúdo cifrado exige a chave e o contexto corretos', async () => {
 });
 
 test('senha de conteúdo desbloqueia a raiz somente para a conta correta', async () => {
-  const password = 'uma frase secreta independente';
+  const password = '1234';
+  for (const invalid of ['123', 'a'.repeat(129), null]) {
+    await assert.rejects(createRoot(invalid, 'owner', 'keyset'), /entre 4 e 128/);
+  }
   const root = await createRoot(password, 'owner', 'keyset');
   const protectedNote = await seal(root.key, { text: 'conteúdo privado' }, 'note');
   const reopened = await unlockRoot(password, root.envelope, 'owner', 'keyset');

@@ -6,23 +6,27 @@
 
 Na entrada, escolha **Crie sua conta** e preencha nome, e-mail e senha da conta. Defina também uma **senha de conteúdo**, confirme-a e leia o aviso de proteção.
 
+A senha da conta aceita de **8 a 128 caracteres**; a senha de conteúdo dos cadernos, de **4 a 128 caracteres**. Ambas permitem letras e números. O mínimo de conteúdo facilita o uso, mas senhas curtas oferecem menos resistência a tentativas de adivinhação; prefira uma frase maior.
+
 A senha da conta autentica você. A senha de conteúdo desbloqueia suas notas no navegador; ela é solicitada novamente ao recarregar. Atualmente, esquecer a senha de conteúdo impede recuperar suas notas pelo administrador. Não há fluxo de recuperação de conta implementado.
 
 Para experimentar sem cadastro, use a prévia. Ela funciona apenas na memória da aba e **não salva** notas, cadernos ou personalizações.
 
 ## Home
 
+No desktop (largura acima de 720 px), a entrada e o portal ocupam a altura da janela sem rolagem da página. Espaços e cartões se ajustam à altura disponível; conteúdo maior continua acessível dentro dos formulários, painéis e coleção. Em telas de até 720 px, a entrada e o portal mantêm a rolagem normal. O caderno conserva seus controles próprios de zoom e deslocamento.
+
 Após entrar e desbloquear a biblioteca, você encontra três destinos:
 
-- **Meu perfil:** informações da conta, contagem de cadernos/estantes e acesso ao progresso.
-- **Minhas estantes:** seus cadernos, criação, busca, favoritos e organização.
+- **Perfil:** informações da conta, contagem de cadernos/estantes e acesso ao progresso.
+- **Estantes:** seus cadernos, criação, busca, favoritos e organização.
 - **Social:** interfaces de descobertas, pessoas e conversas, ainda em construção.
 
 Quando há uma retomada disponível, **Continuar de onde parei** abre o caderno correspondente. Nenhum caderno é publicado automaticamente.
 
 ## Cadernos e estantes
 
-Em **Minhas estantes**, clique em **Novo caderno**, defina nome, matéria, tags e tamanho inicial da folha. O campo de estantes aceita até 12 nomes, separados por vírgula. Reutilizar um nome reúne os cadernos no mesmo grupo.
+Em **Estantes**, clique em **Novo caderno**, defina nome, matéria, tags e tamanho inicial da folha. O campo de estantes aceita até 12 nomes, separados por vírgula. Reutilizar um nome reúne os cadernos no mesmo grupo.
 
 Os botões das estantes filtram a coleção. A busca e o seletor **Mostrar** ajudam a encontrar cadernos; **Organizar** permite ajustar seus grupos e o favorito. Retirar um caderno de uma estante não apaga suas páginas. Estantes são grupos de cadernos; criar estantes vazias ou renomeá-las coletivamente ainda não está disponível.
 

@@ -6,6 +6,38 @@ Consolidação das respostas do proprietário e pesquisa aplicada, atualizada em
 
 ## Decisões complementares e exemplos visuais
 
+### Título integrado ao papel e margem removida — 13/10/2026
+
+O cabeçalho das folhas também deixa de exibir LIBRARY4 / NOTAS. Remoção no HTML original alcança as folhas e suas cópias da virada; regras do último span foram removidas para não ocultar o número da página no celular.
+
+O campo de título não recebe a sombra rebaixada dos controles retrô: permanece transparente, sem borda, com indicação de foco ao editar. A linha vertical decorativa da margem foi removida de todas as folhas, incluindo cópias da virada, sem alterar pautas, conteúdo ou dimensões. library.css exclui .page-title do relevo geral; notebook.css desativa o pseudo-elemento somente nas folhas, preservando a moldura das capas. Conferência na prévia confirmou título sem sombra/borda e margem ausente; CSS validado pelo esbuild.
+
+### Remoção de texto decorativo — 13/10/2026
+
+Entrada ilustrada reduzida à marca maior e estante sem textos nos livros ou bilhete. Home conserva somente ícones, nomes dos destinos e retomada; coleção remove apresentação, cabeçalho redundante, ajuda decorativa, resumo da busca e rodapé. Perfil, Social, Progresso e diálogos usam títulos diretos, sem slogans. Botões estáticos e gerados pelo JavaScript não exibem setas; ações de navegação e desfazer/refazer mantêm rótulos acessíveis. Avisos de privacidade, recuperação, erros, salvamento e funções indisponíveis continuam presentes.
+
+Mudanças em index.html/app.js eliminam elementos e seus escritores; library.css remove regras obsoletas, centraliza marca/estante e simplifica áreas do grid. Sem dependências nem alterações nas notas ou no fluxo de proteção.
+
+Validação: 47 testes aprovados (incluindo SQL/API), sintaxe de 38 arquivos JavaScript e CSS validado pelo esbuild. Navegador conferiu login/cadastro, Home, Perfil, Progresso, Social, coleção, diálogo e abertura do caderno na prévia; sem erros de console. Rótulos Anterior/Próxima cabem nos controles. Entrada móvel em 390×844 mantém rolagem externa. Fluxo autenticado completo e toque físico não reensaiados nesta remoção de texto.
+
+### Enquadramento na janela — 13/10/2026
+
+Acima de 720 px de largura, html/body bloqueiam a rolagem externa e a entrada/portal ocupam 100dvh. Cabeçalhos usam altura própria, main recebe o restante e as telas têm min-height zero para poder encolher. Margens, títulos e ilustrações respondem à altura disponível. Cadastro distribui campos em duas colunas; home conserva os três destinos. Estantes organizam cabeçalho/filtros em grid, dedicando o restante à coleção; em janelas baixas, capas menores têm metadados e ações ao lado. Perfil/Social usam painéis limitados e Progresso mantém quatro métricas na mesma linha no desktop.
+
+Conteúdo arbitrariamente grande não é cortado nem reduzido até ficar ilegível: formulários/painéis/lista podem rolar internamente quando necessário, mantendo página e navegação enquadradas. Diálogos conservam seu limite de altura e rolagem interna. Em até 720 px, entrada e portal mantêm o fluxo/rolagem móvel existentes. O caderno mantém sua geometria, zoom/pan e controles próprios. Implementação somente em library.css, sem lógica, dependências ou alterações de dados.
+
+Validação: parsing CSS pelo esbuild sem avisos e 47 testes aprovados, incluindo SQL/API. Ensaio no navegador em 1280×600 e 800×600 confirmou home/perfil/social/estantes com altura externa igual à janela; progresso conferido em 800×600 e home em 1280×720. Login/cadastro também mantêm a página fixa, com fallback de rolagem interna no cadastro baixo. Em 390×844, login/home conservaram rolagem externa. Testes visuais usam a prévia em memória; não substituem ensaio de toque físico ou todas as combinações de zoom do navegador.
+
+### Controles retrô e materiais — 13/10/2026
+
+A identidade mantém os marrons, creme, tipografia literária e biblioteca rústica. As referências de Windows antigo, MSN e skins servem para relevo e interação, sem copiar interfaces ou assets: botões chanfrados, campos rebaixados, abas pressionadas e painéis com moldura discreta. Cursor próprio pixelado para mouse, mão em ações, I-beam na escrita e indicação de arraste nas bordas; celular conserva interação nativa. Foco visível, controles indisponíveis, movimento reduzido e alto contraste continuam considerados.
+
+Arte combina CSS com SVG próprios locais: veios e nós da madeira, granulação estática de materiais e cursores. Madeira aparece na entrada, portal, mesa de madeira/escura e prateleiras; linho conserva seu acabamento. Livros do login ganham nervuras e faixas de encadernação. Papel e couro do caderno recebem granulação, incluindo faces de virada; material liso e opção sem textura mantêm suas escolhas. Nenhuma biblioteca gráfica nova: o shader WebGL opcional existente continua responsável apenas pela luz ambiental, e texto/edição permanecem HTML.
+
+Integração alcança library.css, quatro SVG públicos e lista explícita de assets em server.js. Teste de assets verifica MIME e bloqueio de caminhos não publicados. Não muda dimensões das folhas, paginação, dados privados ou autosave. Renderização 3D e ilustrações pré-renderizadas mais elaboradas são possibilidades para avaliação posterior, não entregas desta rodada.
+
+Validação: build concluído, sintaxe de 38 arquivos JavaScript, 47 testes aprovados sem skips (incluindo SQL/API), parsing CSS pelo esbuild sem avisos e diff sem erros de whitespace. Navegador conferiu login, abertura do caderno e abas, além de entrada/painel com viewport de 390×844; entrada sem transbordamento horizontal. Toque físico, desempenho prolongado e todas as rotas autenticadas não foram ensaiados nesta rodada.
+
 ### Portal de biblioteca — 12/10/2026
 
 Entrada em duas superfícies: convite sobre madeira ilustrada e formulário sobre papel claro. Livros e prateleira são composição própria em CSS; ícones dos três caminhos são SVG locais originais. Paleta marrom/creme, luz quente e acabamento discreto conservam a direção do caderno, sem reproduzir Minecraft. No celular, o convite se reduz e os destinos ficam em uma coluna; controles preservam rótulos/foco e movimento reduzido elimina elevação das capas/cartões.
