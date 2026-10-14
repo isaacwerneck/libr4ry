@@ -7,7 +7,7 @@ import { rememberEdit, restoreEdit, formatSelection } from '../public/edit-histo
 import { protectBook, readDrafts, recoverDraft, clearDraft } from '../public/drafts.js';
 import { importKey, makeSecret, open } from '../public/crypto.js';
 import { context, saveBook } from '../public/storage.js';
-import { clampZoom, setupNotebookViewport, positionNotebook, fitNotebookHeight, matchNotebookCover, revealNotebookRect } from '../public/notebook-viewport.js';
+import { clampZoom, setupNotebookViewport, positionNotebook, centerNotebookRect, fitNotebookHeight, matchNotebookCover, revealNotebookRect } from '../public/notebook-viewport.js';
 
 function book() {
   return { id: crypto.randomUUID(), ownerId: crypto.randomUUID(), title: 'Título privado', subject: '', tags: [],
@@ -104,6 +104,19 @@ test('capa acompanha folha em zoom/deslocamento e restaura visibilidade após me
   assert.equal(spread.hidden, true);
 });
 
+test('reenquadramento centraliza capa e preserva o início do texto no celular sem acumular deslocamento', () => {
+  const viewport = { dataset: {}, style: { setProperty() {} } };
+  const bounds = { left: 24, right: 366, top: 150 };
+  centerNotebookRect(viewport, { left: 420, top: 90, width: 300 }, bounds);
+  assert.equal(Number(viewport.dataset.offset), -375);
+  assert.equal(Number(viewport.dataset.vertical), 60);
+  centerNotebookRect(viewport, { left: 45, top: 150, width: 300 }, bounds);
+  assert.equal(Number(viewport.dataset.offset), -375);
+  centerNotebookRect(viewport, { left: 45, top: 150, width: 714 }, bounds, 54.4);
+  assert.equal(Number(viewport.dataset.offset), -450.4);
+  assert.ok(Math.abs(45 - 75.4 + 54.4 - bounds.left) < 1e-9);
+});
+
 test('cursor permanece visível movendo apenas o caderno quando ultrapassa os limites', () => {
   const viewport = { dataset: {}, style: { setProperty() {} } };
   const bounds = { left: 200, right: 900, top: 100, bottom: 600 };
@@ -164,6 +177,12 @@ test('arraste move enquadramento sem bloquear clique direito simples ou zoom for
   positionNotebook(viewport); assert.equal(Number(viewport.dataset.offset), 0);
   assert.equal(Number(viewport.dataset.vertical), 0);
   assert.equal(dispatch('pointerdown', { button: 0, pointerType: 'touch' }).defaultPrevented, false);
+  viewport.dataset.pan = 'true';
+  dispatch('pointerdown', { button: 0, pointerType: 'touch', pointerId: 4, clientX: 100, clientY: 100 });
+  dispatch('pointermove', { buttons: 1, pointerId: 4, clientX: 80, clientY: 60 });
+  dispatch('pointerup');
+  assert.equal(Number(viewport.dataset.offset), -20);
+  assert.equal(Number(viewport.dataset.vertical), -40);
   delete globalThis.window;
 });
 

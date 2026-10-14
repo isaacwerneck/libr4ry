@@ -2,6 +2,8 @@
 
 Uma biblioteca pessoal para escrever, organizar ideias e voltar aos seus estudos. O Library4 combina cadernos digitais com uma interface aconchegante de madeira e papel, capas personalizáveis e escrita visual. Controles com relevo retrô e cursor pixelado para mouse complementam texturas próprias em CSS e SVG; a direção visual está em [Direção artística](docs/design-templo.md). No desktop, a entrada e o portal ficam enquadrados na janela, com rolagem interna apenas para conteúdo excedente; em telas de até 720 px, a rolagem da página permanece disponível.
 
+A coleção separa capas e ações, e o perfil apresenta as métricas atuais da biblioteca. O caderno enquadra a folha ativa para escrever, oferece visão inteira e adapta a largura de leitura ao celular sem alterar a divisão das notas.
+
 A entrada ilustrada mostra apenas a marca e a estante. Menus e botões usam rótulos diretos, sem slogans ou setas decorativas; avisos de privacidade, salvamento e funções indisponíveis permanecem visíveis.
 
 ## O que você pode fazer

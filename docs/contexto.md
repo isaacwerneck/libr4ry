@@ -1,5 +1,7 @@
 # Contexto do projeto
 
+Refinamento vigente (13/10/2026): capa e ações da coleção não se sobrepõem; perfil apresenta métricas reais em painéis compactos; manter madeira discreta e controles retrô coerentes. Câmera enquadra capa inteira e folha ativa legível, adapta-se à janela e preserva zoom manual. No celular, ferramentas iniciam recolhidas e o texto adapta sua largura de apresentação, sem alterar notas, IDs, divisão de páginas ou largura lógica das folhas. Mover caderno admite mouse e toque. Detalhes em design-templo.md e uso.md.
+
 Folhas vigentes (13/10/2026): remover o rótulo decorativo LIBRARY4 / NOTAS do cabeçalho, conservando o número da página também no celular. Título integrado ao papel, sem retângulo/relevo de campo, conservando foco de edição. Remover a linha vertical decorativa da margem das folhas e faces da virada; manter pautas, dimensões e molduras das capas.
 
 Texto vigente (13/10/2026): remover slogans, frases decorativas, rótulos redundantes e setas dos botões. Login ilustrado contém somente marca libr4ry maior acima da estante, com livros sem texto. Portal usa destinos Perfil/Estantes/Social e títulos diretos; conservar avisos de proteção, erros, salvamento e indisponibilidade. Navegação por páginas e desfazer/refazer usam palavras no lugar de setas.

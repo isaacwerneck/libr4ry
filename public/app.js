@@ -6,7 +6,7 @@ import { capturePaper, turnPaper, stopPaperMotion, setupPageCorner } from './not
 import { preferences, recentPosition } from './notebook-preferences.js';
 import { protectBook, readDrafts, recoverDraft, clearDraft, draftStore } from './drafts.js';
 import { seal, open } from './crypto.js';
-import { setupNotebookViewport, fitZoom, fitNotebookHeight, positionNotebook, matchNotebookCover, revealNotebookRect } from './notebook-viewport.js';
+import { setupNotebookViewport, fitZoom, fitNotebookHeight, positionNotebook, centerNotebookRect, matchNotebookCover, revealNotebookRect } from './notebook-viewport.js';
 import { rememberEdit, restoreEdit, formatSelection } from './edit-history.js';
 import { organization, collectionShelves, collectionBooks } from './collection.js';
 import { installStudyStyles, styledSelection, styleRanges, plainStudyText, continueLine, findNotebookPages, INKS, validInk, rgbInk, writingShortcut } from './notebook-writing.js';
@@ -84,11 +84,15 @@ const closeTools = notebookTools.map(details => () => {
 const closeNotebookHud = () => closeTools.forEach(close => close());
 for (const details of notebookTools) details.addEventListener('toggle', () => {
   $(details.id + '-tab').setAttribute('aria-expanded', String(details.open));
-  if (details.open) notebookTools.forEach((other, index) => { if (other !== details && other.open) closeTools[index](); });
+  if (details.open) {
+    notebookTools.forEach((other, index) => { if (other !== details && other.open) closeTools[index](); });
+    if (currentPage && notebookFrameMode === 'page' && window.innerWidth > 720) frameNotebook();
+  }
 });
 let reading = false;
 let sourceMode = false;
 let bookFace = null;
+let notebookFrameMode = 'page';
 let blankVerso = false;
 let composingSheet;
 const companion = $('paper').cloneNode(true);
@@ -162,7 +166,7 @@ viewport.append(spread);
 function writingBounds() {
   const heading = document.querySelector('.notebook-heading').getBoundingClientRect();
   const tools = workbench.getBoundingClientRect();
-  return { top: heading.bottom + 18, bottom: window.innerHeight - 92,
+  return { top: Math.max(heading.bottom, window.innerWidth <= 720 ? tools.top + toolTabs.offsetHeight : heading.bottom) + 18, bottom: window.innerHeight - 92,
     left: 24, right: window.innerWidth > 600 && notebookTools.some(tool => tool.open) ? tools.left - 24 : window.innerWidth - 24 };
 }
 function frameNotebookTop(paper) {
@@ -200,7 +204,7 @@ function showBookFace(face, revealTools = true) {
   $('writing-tools').inert = Boolean(face);
   $('writing-tools-tab').disabled = Boolean(face);
   coverEditor.render();
-  if (entering && !reading && revealTools) { closeNotebookHud(); $('notebook-hud').open = true; }
+  if (entering && !reading && revealTools && window.innerWidth > 720) { closeNotebookHud(); $('notebook-hud').open = true; }
   if (!face) return;
   openCover.textContent = face === 'front' ? 'Abrir caderno' : 'Voltar às anotações';
   coverFace.dataset.face = face;
@@ -209,15 +213,41 @@ function showBookFace(face, revealTools = true) {
 }
 openCover.addEventListener('click', () => navigateBook(bookFace === 'front' ? 1 : -1));
 const setViewportZoom = setupNotebookViewport(viewport, spread, stopNotebookMotion, zoom => {
+  notebookFrameMode = null;
   currentBook.preferences.zoom = zoom; $('notebook-zoom').value = Math.round(zoom * 100);
   $('zoom-value').textContent = Math.round(zoom * 100) + '%';
-  document.body.style.setProperty('--book-zoom', zoom); fitCover(); changed();
+  document.body.style.setProperty('--book-zoom', zoom); fitWritingHeight(); changed();
 }, document.body);
 const setZoom = value => {
   const zoom = setViewportZoom(value);
   if (currentPage) fitCover();
   return zoom;
 };
+function frameNotebook(mode = notebookFrameMode || 'page') {
+  if (!currentPage || !document.body.classList.contains('studying')) return;
+  notebookFrameMode = mode;
+  const target = bookFace ? coverFace : mode === 'whole' ? spread : activeSheet().paper;
+  const bounds = writingBounds();
+  const rectangle = target.getBoundingClientRect();
+  const scale = currentBook.preferences.zoom;
+  const width = rectangle.width / scale;
+  const height = rectangle.height / scale;
+  const available = Math.max(1, bounds.right - bounds.left);
+  const zoom = mode === 'whole' || bookFace
+    ? fitZoom(Math.min(available / width, Math.max(1, bounds.bottom - bounds.top) / height), 1)
+    : Math.max(window.innerWidth <= 720 ? .85 : .8, fitZoom(available - 24, width));
+  currentBook.preferences.zoom = setZoom(zoom);
+  document.body.style.setProperty('--book-zoom', currentBook.preferences.zoom);
+  fitWritingHeight();
+  $('notebook-zoom').value = Math.round(zoom * 100);
+  $('zoom-value').textContent = Math.round(zoom * 100) + '%';
+  centerNotebook();
+}
+function centerNotebook() {
+  const target = bookFace ? coverFace : notebookFrameMode === 'whole' ? spread : activeSheet().paper;
+  const inset = !bookFace && notebookFrameMode !== 'whole' && window.innerWidth <= 720 ? 64 * currentBook.preferences.zoom : 0;
+  centerNotebookRect(viewport, target.getBoundingClientRect(), writingBounds(), inset);
+}
 function setNotebookPan(enabled) {
   viewport.dataset.pan = String(enabled);
   $('pan-notebook').setAttribute('aria-pressed', String(enabled));
@@ -270,7 +300,7 @@ function rememberPosition(force = false) {
   const sheet = activeSheet();
   const rectangle = sheet.paper.getBoundingClientRect();
   currentBook.position = { pageId: currentPage.id, caret: field(sheet, 'page-content').selectionStart,
-    fraction: Math.max(0, Math.min(1, (92 - rectangle.top) / rectangle.height)), at };
+    fraction: Math.max(0, Math.min(1, (writingBounds().top - rectangle.top) / rectangle.height)), at };
   changed();
   currentBook.interactedAt = at;
   currentBook.position.at = at;
@@ -419,7 +449,7 @@ function renderCollection() {
     const meta = document.createElement('div');
     meta.className = 'card-meta';
     meta.textContent = `${stats(book).words} palavras · ${preview ? 'caderno de prévia' : 'privado'}`;
-    card.append(cover, meta);
+    card.append(cover);
     const actions = document.createElement('div');
     actions.className = 'collection-actions';
     const favorite = button(organization(book.organization).favorite ? '★' : '☆', 'collection-favorite', async () => {
@@ -438,7 +468,10 @@ function renderCollection() {
     const shelves = document.createElement('p');
     shelves.className = 'collection-shelves';
     shelves.textContent = organization(book.organization).shelves.join(' · ') || 'Sem estante';
-    entry.append(card, actions, shelves);
+    const info = document.createElement('div');
+    info.className = 'collection-info';
+    info.append(meta, actions, shelves);
+    entry.append(card, info);
     $('notebook-grid').append(entry);
   });
   renderCollectionSaveState();
@@ -462,6 +495,7 @@ function renderProgress() {
     return total;
   }, { pages: 0, words: 0, tasks: 0 });
   $('progress-metrics').replaceChildren();
+  $('profile-metrics').replaceChildren();
   for (const [label, count] of [['Cadernos', books.length], ['Páginas escritas', totals.pages], ['Palavras atuais', totals.words], ['Metas concluídas', totals.tasks]]) {
     const element = document.createElement('div');
     element.className = 'metric';
@@ -471,6 +505,7 @@ function renderProgress() {
     caption.textContent = label;
     element.append(value, caption);
     $('progress-metrics').append(element);
+    $('profile-metrics').append(element.cloneNode(true));
   }
 }
 
@@ -621,8 +656,9 @@ function selectPage(page, animate = false, remember = animate, drag) {
   if (animate) {
     closeNotebookHud();
     if (stationary) sheets[direction < 0 ? 1 : 0].paper.parentElement.append(stationary);
-    turnPaper(turningSheet.paper, direction, $('motion-mode').value, reducedMotion, outgoing, drag?.progress || 0, () => stationary?.remove());
-  }
+    turnPaper(turningSheet.paper, direction, $('motion-mode').value, reducedMotion, outgoing, drag?.progress || 0, () => { stationary?.remove(); if (notebookFrameMode === 'page') frameNotebook(); else if (!notebookFrameMode) centerNotebook(); });
+  } else if (notebookFrameMode === 'page') frameNotebook();
+  else if (!notebookFrameMode) centerNotebook();
   if (remember) { currentBook.interactedAt = Date.now(); rememberPosition(true); }
 }
 
@@ -635,7 +671,7 @@ function openBook(book) {
   applyAppearance();
   setReading(book.preferences.reading);
   $('notebook-title').textContent = book.title;
-  $('notebook-subject').textContent = book.subject || 'IDEIAS EM CONSTRUÇÃO';
+  $('notebook-subject').textContent = book.subject || '';
   $('notebook-tags').replaceChildren(...book.tags.map(tag => {
     const span = document.createElement('span');
     span.className = 'tag';
@@ -650,18 +686,15 @@ function openBook(book) {
   selectPage(resume?.page || book.pages[0]);
   if (!resume) {
     showBookFace('front');
-    const scale = Math.min(.65, (window.innerWidth - 80) / 1680, (window.innerHeight - 220) / currentBook.paperHeight);
-    currentBook.preferences.zoom = setZoom(scale);
-    document.body.style.setProperty('--book-zoom', currentBook.preferences.zoom);
-    $('notebook-zoom').value = Math.round(currentBook.preferences.zoom * 100);
-    $('zoom-value').textContent = $('notebook-zoom').value + '%';
-    positionNotebook(viewport);
+    closeNotebookHud();
+    frameNotebook('whole');
   }
   if (resume) {
+    frameNotebook('page');
     field(activeSheet(), 'page-content').setSelectionRange(resume.caret, resume.caret);
     requestAnimationFrame(() => {
       const paper = activeSheet().paper;
-      positionNotebook(viewport, Number(viewport.dataset.offset) || 0, 92 - paper.getBoundingClientRect().top - paper.getBoundingClientRect().height * resume.fraction);
+      positionNotebook(viewport, Number(viewport.dataset.offset) || 0, (Number(viewport.dataset.vertical) || 0) + writingBounds().top - paper.getBoundingClientRect().top - paper.getBoundingClientRect().height * resume.fraction);
     });
   }
 }
@@ -724,7 +757,7 @@ function changed(book = currentBook) {
     const sheet = activeSheet();
     const rectangle = sheet.paper.getBoundingClientRect();
     book.position = { pageId: currentPage.id, caret: field(sheet, 'page-content').selectionStart,
-      fraction: Math.max(0, Math.min(1, (92 - rectangle.top) / rectangle.height)), at: book.lastEdit };
+      fraction: Math.max(0, Math.min(1, (writingBounds().top - rectangle.top) / rectangle.height)), at: book.lastEdit };
   }
   book.firstEdit ||= Date.now();
   renderSaveState();
@@ -987,7 +1020,7 @@ function navigateBook(direction, drag) {
     selectPage(face === 'front' ? currentBook.pages[0] : currentBook.pages.at(-1));
     if (face === 'back' && currentBook.pages.length % 2) { blankVerso = true; renderPage(); }
     closeNotebookHud();
-    turnPaper(sheets[direction < 0 ? 0 : 1].paper, direction, $('motion-mode').value, window.matchMedia('(prefers-reduced-motion: reduce)').matches, outgoing, drag?.progress || 0);
+    turnPaper(sheets[direction < 0 ? 0 : 1].paper, direction, $('motion-mode').value, window.matchMedia('(prefers-reduced-motion: reduce)').matches, outgoing, drag?.progress || 0, () => frameNotebook('page'));
     return;
   }
   if (blankVerso && direction < 0) { selectPage(currentBook.pages.at(-1), true, true, { ...drag, direction: -1 }); return; }
@@ -1155,7 +1188,12 @@ window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',
 });
 window.addEventListener('resize', () => {
   stopNotebookMotion();
-  if (currentPage && !composingSheet) { setZoom(currentBook.preferences.zoom); fitWritingHeight(); }
+  if (currentPage && !composingSheet && document.body.classList.contains('studying')) {
+    fitWritingHeight();
+    if (window.innerWidth <= 720) closeNotebookHud();
+    if (notebookFrameMode) frameNotebook(bookFace ? 'whole' : notebookFrameMode);
+    else centerNotebook();
+  }
 });
 document.addEventListener('visibilitychange', () => { if (document.hidden) stopNotebookMotion(); });
 for (const [id, name] of [['paper-style', 'paper'], ['cover-style', 'cover'], ['writing-font', 'font'],
@@ -1185,41 +1223,27 @@ $('save-defaults').addEventListener('click', async () => {
   } catch (error) { notify('Padrão aplicado nesta aba, mas não foi gravado: ' + error.message); }
 });
 $('notebook-zoom').addEventListener('input', () => {
+  notebookFrameMode = null;
   currentBook.preferences.zoom = setZoom(Number($('notebook-zoom').value) / 100);
   document.body.style.setProperty('--book-zoom', currentBook.preferences.zoom);
+  fitWritingHeight();
   $('zoom-value').textContent = $('notebook-zoom').value + '%'; changed();
 });
 $('center-notebook').addEventListener('click', () => {
-  positionNotebook(viewport);
-  closeNotebookHud(); frameNotebookTop(bookFace ? coverFace : activeSheet().paper);
+  closeNotebookHud(); centerNotebook();
 });
 const fitNotebook = button('Ajustar largura', 'text-button', () => {
-  const target = bookFace ? coverFace : spread;
-  const width = target.getBoundingClientRect().width / currentBook.preferences.zoom;
-  currentBook.preferences.zoom = setZoom(fitZoom(viewport.clientWidth - 44, width));
-  document.body.style.setProperty('--book-zoom', currentBook.preferences.zoom);
-  $('notebook-zoom').value = Math.round(currentBook.preferences.zoom * 100);
-  $('zoom-value').textContent = $('notebook-zoom').value + '%';
-  positionNotebook(viewport);
-  closeNotebookHud(); changed();
+  closeNotebookHud(); frameNotebook('page'); changed();
 });
 $('center-notebook').after(fitNotebook);
 fitNotebook.after(button('Ver inteiro', 'text-button', () => {
-  const target = bookFace ? coverFace : spread;
-  const rectangle = target.getBoundingClientRect();
-  const scale = currentBook.preferences.zoom;
-  const available = Math.min((viewport.clientWidth - 44) / (rectangle.width / scale),
-    (window.innerHeight - writingBounds().top - 96) / (rectangle.height / scale));
-  $('notebook-zoom').value = Math.round(fitZoom(available, 1) * 100);
-  $('notebook-zoom').dispatchEvent(new Event('input'));
-  positionNotebook(viewport); closeNotebookHud(); frameNotebookTop(bookFace ? coverFace : activeSheet().paper);
+  closeNotebookHud(); frameNotebook('whole'); changed();
 }));
 $('focus-writing').addEventListener('click', () => {
   setNotebookPan(false);
   if (bookFace || blankVerso) selectPage(currentPage);
   setReading(false); closeNotebookHud();
-  $('notebook-zoom').value = Math.round(Math.max(1, currentBook.preferences.zoom) * 100);
-  $('notebook-zoom').dispatchEvent(new Event('input'));
+  frameNotebook('page');
   if (!sourceMode) {
     const editor = activeSheet().visual.editor;
     editor.commands.focus();

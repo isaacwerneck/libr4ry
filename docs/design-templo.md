@@ -6,6 +6,14 @@ Consolidação das respostas do proprietário e pesquisa aplicada, atualizada em
 
 ## Decisões complementares e exemplos visuais
 
+### Refinamento do portal e câmera — 13/10/2026
+
+Capa clicável e informações/ações agora são elementos irmãos em grid: o centro da capa abre o caderno, enquanto Organizar e favorito têm áreas próprias, sem posição absoluta. Metadados ficam próximos da capa e grupos longos quebram linha. Perfil mostra as quatro métricas reais já calculadas no Progresso, com painéis ajustados ao conteúdo. Controles, destinos e retomada usam cantos e estados consistentes; seleção de abas ganha peso e borda, favorito ganha preenchimento. Madeira tem veios mais suaves e repetição maior; livros do login recebem lombadas e bordas de papel mais definidas. Entrada móvel reduz a faixa de marca e elimina espaço residual de erro vazio.
+
+A câmera centraliza a capa inteira e aproxima a folha ativa após abrir. Ajustar largura/Voltar à escrita enquadram a folha; Ver inteiro enquadra as duas faces. Redimensionar recalcula o modo automático e recentraliza o modo manual sem trocar seu zoom. Retomada usa os limites atuais da escrita. No celular, painéis começam fechados, a faixa de ferramentas fica acima da folha e a largura de texto se adapta somente na apresentação; notas, IDs, divisão das páginas e largura lógica de 840 px permanecem iguais. Altura comum se ajusta ao conteúdo renderizado pelo mecanismo existente. Mover caderno aceita arraste com mouse ou toque quando ativado; Escape encerra.
+
+Sem dependências ou alteração de formato privado. Novo teste cobre centralização sem acumular deslocamento e o teste de pan inclui toque. Build, sintaxe de 38 arquivos, CSS pelo esbuild e 48 testes aprovados, incluindo SQL/API. Navegador: capa/ações/favorito separados; perfil inteiro em 1280×720; telas em 800×600; login/cadastro e leitura visual/Markdown em 390×844. Zoom manual 86% preservado ao redimensionar e 99% preservado ao virar; título editado na prévia e retomado corretamente, duas páginas e largura lógica de 840 px preservadas. Painéis móveis fechados e texto sem recorte lateral no conteúdo ensaiado. Botão Abrir caderno mantém alvo de 44 px visuais mesmo na visão inteira. Toque físico, teclado virtual e conteúdo arbitrariamente longo não foram ensaiados; o pan por toque foi verificado por eventos no teste.
+
 ### Título integrado ao papel e margem removida — 13/10/2026
 
 O cabeçalho das folhas também deixa de exibir LIBRARY4 / NOTAS. Remoção no HTML original alcança as folhas e suas cópias da virada; regras do último span foram removidas para não ocultar o número da página no celular.

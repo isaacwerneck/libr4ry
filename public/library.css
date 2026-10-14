@@ -25,6 +25,15 @@ dialog::backdrop { background: #2a1b1466; backdrop-filter: blur(3px); }
 .notification { background: #483127; border-color: #ba9570; border-radius: 10px; }
 .dialog-top > button:only-child { margin-left: auto; }
 .studying .page-navigation .text-button { font-size: 12px; padding-inline: 12px; }
+.profile-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 20px; margin-block: 14px; }
+#profile-metrics .metric { border-top: 1px solid #cbb28c; padding: 12px 0 0; }
+#profile-metrics .metric strong { display: block; font: 32px/1.2 var(--serif); }
+#profile-metrics .metric span { display: block; margin-top: 6px; color: #73573e; font-size: 12px; }
+.library-header .nav-button.active { border-bottom: 2px solid #ac8258; }
+.studying .tool-tabs button[aria-expanded="true"] { border-bottom: 3px solid #795335; font-weight: 600; }
+.studying .notebook-viewport[data-pan="true"] { touch-action: none; }
+.studying #back-library { font-size: 13px; padding-inline: 12px; }
+.studying .cover-open { font-size: calc(12px / var(--book-zoom, 1)); min-height: calc(44px / var(--book-zoom, 1)); padding: calc(8px / var(--book-zoom, 1)) calc(14px / var(--book-zoom, 1)); border-radius: 3px; }
 .history-row { background: #ede0c6; }
 .history-row.selected { border-color: #94643e; }
 .history-preview { background: #efe2cb; }
@@ -56,6 +65,16 @@ dialog::backdrop { background: #2a1b1466; backdrop-filter: blur(3px); }
 .privacy-note { border-top-color: #d9c7a7; color: #715d48; margin-top: 24px; }
 .privacy-note p { font-size: 12px; }
 .auth-panel .form-error { color: var(--red); }
+#auth-error:empty { min-height: 0; margin: 0; }
+.studying .notebook-workbench .hud-actions { gap: 8px; }
+.studying .notebook-workbench .hud-actions .text-button { border: 1px solid #c5a981; border-radius: 3px; padding: 8px; }
+@media (max-width: 720px) {
+  .studying .notebook-workbench { top: 88px; left: 12px; right: 12px; width: auto; }
+  .studying .paper:not(.book-face) :is(.page-title, .visual-host, textarea, .markdown, .paper-top, .paper-bottom) {
+    width: min(100%, calc((100vw - 48px) / var(--book-zoom, 1))); max-width: 100%; flex-shrink: 0;
+  }
+  .studying .notebook-workbench .notebook-hud > .hud-panel { max-height: min(360px, calc(100dvh - 220px)); }
+}
 
 body:not(.studying) .workspace { display: block; min-height: 100dvh; background: transparent; }
 body:not(.studying) .library-header { position: relative; inset: auto; width: auto; height: auto; min-height: 86px; padding: 18px clamp(20px, 4vw, 64px); display: flex; flex-direction: row; align-items: center; gap: 34px; border: 0; background: #443023; box-shadow: inset 0 -1px 0 #d4ad7840, 0 3px 10px #33201433; }
@@ -75,15 +94,15 @@ body:not(.studying) .topbar { height: 66px; border: 0; padding: 0 clamp(20px, 5v
 body:not(.studying) .breadcrumb, body:not(.studying) .date-label { color: #f5e3c5; }
 .home-view { min-height: calc(100dvh - 152px); max-width: 1140px; margin: auto; padding: 24px 40px; display: flex; flex-direction: column; justify-content: center; text-align: center; }
 .home-destinations { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-.destination { position: relative; display: flex; flex-direction: column; align-items: flex-start; text-align: left; min-width: 0; padding: 20px 26px 30px; border: 1px solid #d3b78c; border-radius: 9px 14px 14px 9px; background: #f6e6c9; color: #483126; box-shadow: inset 5px 0 0 #d4bb92, inset 7px 0 0 #fff3d8, 0 4px 0 #c1a47b, 0 12px 20px #3f291f26; transition: transform 230ms var(--library-ease), box-shadow 230ms var(--library-ease); }
-.destination:hover { transform: translateY(-5px) rotate(-.5deg); box-shadow: inset 5px 0 0 #d4bb92, inset 7px 0 0 #fff3d8, 0 4px 0 #c1a47b, 0 18px 24px #3f291f33; }
+.destination { position: relative; display: flex; flex-direction: column; align-items: flex-start; text-align: left; min-width: 0; padding: 20px 26px 30px; border: 1px solid #d3b78c; border-radius: 4px; background: #f6e6c9; color: #483126; box-shadow: inset 5px 0 0 #d4bb92, inset 7px 0 0 #fff3d8, 0 4px 0 #c1a47b, 0 12px 20px #3f291f26; transition: transform 230ms var(--library-ease), box-shadow 230ms var(--library-ease); }
+.destination:hover { transform: translateY(-2px); box-shadow: inset 5px 0 0 #d4bb92, inset 7px 0 0 #fff3d8, 0 4px 0 #c1a47b, 0 18px 24px #3f291f33; }
 .destination:active { transform: translateY(1px); }
 .destination-art { display: flex; width: 100%; justify-content: center; height: 85px; margin-bottom: 17px; }
 .destination-art svg { height: 100%; width: 120px; fill: #b890604d; stroke: #755333; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .destination-shelves { background: #eedbb6; }
 .destination-social { background: #f2e2cb; }
 .destination strong { font: 400 27px var(--serif); margin: 12px 0 9px; }
-.continue-notebook { align-self: center; border: 1px solid #f5ddb559; border-radius: 30px; background: #50372540; color: #fff0d2; margin-top: 30px; padding: 12px 22px; min-height: 44px; font-size: 13px; max-width: 100%; overflow-wrap: anywhere; }
+.continue-notebook { align-self: center; border: 1px solid #f5ddb559; border-radius: 3px; background: #50372599; color: #fff0d2; margin-top: 30px; padding: 12px 22px; min-height: 44px; font-size: 13px; max-width: 100%; overflow-wrap: anywhere; }
 .portal-view, body:not(.studying) .library-view, body:not(.studying) .progress-view { max-width: 1200px; margin: 0 auto; padding: 35px 40px 60px; }
 .portal-heading, body:not(.studying) .library-heading { margin-bottom: 30px; color: #fff0d5; }
 .portal-heading h1, body:not(.studying) .library-heading h1, body:not(.studying) .progress-view h1 { font: 400 clamp(34px, 4vw, 52px)/1.1 var(--serif); letter-spacing: -1px; margin: 14px 0; }
@@ -112,13 +131,20 @@ body:not(.studying) .breadcrumb, body:not(.studying) .date-label { color: #f5e3c
 .shelf-button { border: 1px solid #d3b485; border-radius: 6px; padding: 10px 16px; min-height: 44px; background: #dcc29c; color: #62432d; box-shadow: 0 2px 0 #67442c44; font-size: 12px; }
 .shelf-button[aria-pressed="true"] { background: #593c2b; color: #ffedcb; border-color: #c69d6a; }
 body:not(.studying) .collection-tools { background: #f5e5c9; border-radius: 12px; padding: 20px 24px; gap: 24px; }
-body:not(.studying) .notebook-grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 38px 32px; padding: 20px 14px 32px; }
-body:not(.studying) .collection-entry { position: relative; padding-bottom: 21px; }
+body:not(.studying) .notebook-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 28px 32px; padding: 20px 14px 32px; }
+body:not(.studying) .collection-entry { position: relative; padding-bottom: 21px; display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 20px; align-items: start; }
+.collection-info { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; min-width: 0; padding-top: 12px; overflow-wrap: anywhere; }
+.collection-info .collection-actions { flex-wrap: wrap; margin: 0; }
+.collection-info .collection-shelves { margin: 0; line-height: 1.6; }
+.collection-info .collection-favorite { width: 44px; min-height: 44px; border: 1px solid #e8c99580; border-radius: 3px; background: #49302270; }
+.collection-info .collection-favorite[aria-pressed="true"] { background: #ecd3a6; color: #523725; box-shadow: var(--retro-pressed); }
+.collection-info .text-button { padding: 8px 12px; border: 1px solid #e8c99580; border-radius: 3px; background: #49302270; }
+.collection-info .text-button:hover { background: #493022b3; }
 body:not(.studying) .collection-entry::after { content: ''; position: absolute; bottom: 0; left: -14px; right: -14px; height: 13px; background: linear-gradient(#c79a65, #936b43 45%, #664329 50%, #755134); box-shadow: 0 8px 10px #33211333; border-radius: 2px; }
-body:not(.studying) .book-cover { height: 282px; background-color: #725038; box-shadow: inset 6px 0 0 #30231855, inset 9px 0 0 #b895653b, 3px 3px 0 #e6d4b0, 5px 5px 0 #9f7952, 7px 8px 12px #30201355; border-radius: 4px 12px 12px 4px; padding: 25px 24px 20px 32px; transition: transform 200ms var(--library-ease); }
-body:not(.studying) .notebook-card { width: 100%; }
+body:not(.studying) .book-cover { height: 220px; background-color: #725038; box-shadow: inset 6px 0 0 #30231855, inset 9px 0 0 #b895653b, 3px 3px 0 #e6d4b0, 5px 5px 0 #9f7952, 7px 8px 12px #30201355; border-radius: 4px 12px 12px 4px; padding: 20px 16px 18px 24px; transition: transform 200ms var(--library-ease); }
+body:not(.studying) .notebook-card { width: 100%; min-width: 0; }
 body:not(.studying) .notebook-card:hover .book-cover { transform: translateY(-5px) rotate(-1deg); }
-body:not(.studying) .book-cover h3 { font-size: 28px; }
+body:not(.studying) .book-cover h3 { font-size: 23px; }
 body:not(.studying) .card-meta, body:not(.studying) .collection-shelves { color: #f7e2c0; font-size: 12px; }
 body:not(.studying) .collection-actions .text-button, body:not(.studying) .collection-favorite { color: #fff1d2; }
 body:not(.studying) .empty-library { border: 1px solid #d7b990; background: #f4e5c9; border-radius: 12px; }
@@ -129,6 +155,7 @@ body:not(.studying) .progress-view h1, body:not(.studying) .progress-view h1 em 
 .collection-save-state { background: #f7e7c9; border-color: #c6a677; }
 
 @media (max-width: 1000px) {
+  .profile-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .library-header .account-link strong { display: none; }
   body:not(.studying) .library-header { gap: 20px; padding-inline: 24px; }
   .library-header .sidebar-bottom { flex-direction: row; }
@@ -139,7 +166,8 @@ body:not(.studying) .progress-view h1, body:not(.studying) .progress-view h1 em 
 }
 @media (max-width: 720px) {
   .auth-layout { grid-template-columns: 1fr; }
-  .auth-story { padding: 24px; min-height: 270px; }
+  .auth-story { padding: 26px 24px; min-height: 0; }
+  .auth-story .wordmark { font-size: 44px; }
   .library-illustration { display: none; }
   .auth-story .wordmark { margin: auto; }
   .auth-panel { padding: 35px 24px 45px; }
@@ -163,7 +191,9 @@ body:not(.studying) .progress-view h1, body:not(.studying) .progress-view h1 em 
   .social-sections button { flex: 1; padding: 12px; }
   body:not(.studying) .collection-tools { flex-direction: column; align-items: stretch; padding: 20px; gap: 16px; }
   body:not(.studying) .collection-search { width: 100%; }
-  body:not(.studying) .notebook-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  body:not(.studying) .notebook-grid { grid-template-columns: 1fr; }
+  body:not(.studying) .collection-entry { grid-template-columns: 140px minmax(0, 1fr); gap: 16px; }
+  body:not(.studying) .book-cover { height: 200px; }
   body:not(.studying) .metrics-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -250,6 +280,9 @@ dialog h2 { border-bottom: 1px solid #bfa17a; padding-bottom: 14px; }
   border-block: 1px solid #e7c38b66; background: #20140e22;
   box-shadow: 0 1px 1px #20140e55;
 }
+.illustration-books { filter: drop-shadow(0 5px 3px #23170f40); }
+.illustration-books i { border-radius: 6px 4px 1px 1px; box-shadow: inset 4px 0 3px #170d0b66, inset 8px 0 1px #f2d2a41a, inset -3px 0 2px #1f120d55, 3px 0 2px #2c1c1466; }
+.illustration-books i:nth-child(2), .illustration-books i:nth-child(5) { border-top: 5px solid #e3cda6; }
 .illustration-books i::before { top: 15px; }
 .illustration-books i::after { bottom: 15px; }
 .illustration-shelf, body:not(.studying) .collection-entry::after {
@@ -329,8 +362,11 @@ dialog h2 { border-bottom: 1px solid #bfa17a; padding-bottom: 14px; }
   .portal-heading h1, body:not(.studying) .library-heading h1, body:not(.studying) .progress-view h1 {
     font-size: clamp(28px, 5dvh, 44px); margin-block: 8px;
   }
-  .profile-layout, .social-layout { flex: 1; min-height: 0; }
-  .profile-sections { min-height: 0; grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .profile-layout, .social-layout { min-height: 0; }
+  .social-layout { flex: 1; }
+  .profile-layout { align-items: start; }
+  .profile-sections { align-content: start; }
+  .profile-sections { min-height: 0; grid-template-rows: auto auto; gap: 16px; }
   .paper-panel { min-height: 0; padding: clamp(16px, 2.5dvh, 28px); overflow: auto; }
   .paper-panel h2 { font-size: clamp(22px, 3.5dvh, 28px); margin-block: 10px; }
   .paper-panel p { margin-block: 10px; }
@@ -359,8 +395,8 @@ dialog h2 { border-bottom: 1px solid #bfa17a; padding-bottom: 14px; }
   #collection-save-state { grid-area: state; }
   body:not(.studying) .library-view .notebook-grid { grid-area: books; container-type: size; }
   body:not(.studying) .library-view .empty-library { grid-area: books; }
-  body:not(.studying) .book-cover { height: clamp(180px, calc(100cqh - 136px), 282px); padding-block: 16px; }
-  body:not(.studying) .book-cover h3 { font-size: 24px; margin-block: 16px 8px; -webkit-line-clamp: 2; }
+  body:not(.studying) .book-cover { height: clamp(180px, 30dvh, 235px); padding-block: 16px; }
+  body:not(.studying) .book-cover h3 { font-size: 22px; margin-block: 16px 8px; -webkit-line-clamp: 3; }
   body:not(.studying) .card-meta { margin-top: 10px; }
   body:not(.studying) .progress-view > h1, body:not(.studying) .progress-view > p { margin-block: 0; }
   body:not(.studying) .metrics-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 8px; padding: 16px; }
@@ -369,14 +405,10 @@ dialog h2 { border-bottom: 1px solid #bfa17a; padding-bottom: 14px; }
 }
 @media (min-width: 721px) and (max-height: 850px) {
   body:not(.studying) .notebook-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
-  body:not(.studying) .notebook-card { display: flex; gap: 16px; align-items: flex-start; }
-  body:not(.studying) .book-cover { flex: 0 0 140px; height: 160px; padding: 14px 12px 14px 20px; }
+  body:not(.studying) .book-cover { height: 190px; padding: 14px 12px 14px 20px; }
   body:not(.studying) .book-cover h3 { font-size: 18px; margin-block: 12px 8px; }
   body:not(.studying) .cover-number { font-size: 8px; letter-spacing: 1px; }
   body:not(.studying) .cover-bottom { margin-top: 8px; padding-top: 8px; }
-  body:not(.studying) .card-meta { flex: 1; }
-  body:not(.studying) .collection-actions { position: absolute; left: 156px; top: 64px; margin: 0; }
-  body:not(.studying) .collection-shelves { position: absolute; left: 156px; right: 0; top: 116px; max-height: 44px; overflow: auto; margin: 0; }
 }
 @media (min-width: 721px) and (max-height: 650px) {
   .auth-story .library-illustration { transform: scale(.75); transform-origin: center; }

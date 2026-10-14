@@ -25,6 +25,11 @@ export function positionNotebook(viewport, offset = 0, vertical = 0) {
   viewport.style.setProperty('--book-offset', offset + 'px');
   viewport.style.setProperty('--book-vertical', vertical + 'px');
 }
+export function centerNotebookRect(viewport, rectangle, bounds, contentInset = 0) {
+  const left = contentInset ? bounds.left - contentInset : (bounds.left + bounds.right - rectangle.width) / 2;
+  positionNotebook(viewport, (Number(viewport.dataset.offset) || 0) + left - rectangle.left,
+    (Number(viewport.dataset.vertical) || 0) + bounds.top - rectangle.top);
+}
 export function revealNotebookRect(viewport, rectangle, bounds) {
   const dx = rectangle.left < bounds.left ? bounds.left - rectangle.left : rectangle.right > bounds.right ? bounds.right - rectangle.right : 0;
   const dy = rectangle.top < bounds.top ? bounds.top - rectangle.top : rectangle.bottom > bounds.bottom ? bounds.bottom - rectangle.bottom : 0;
@@ -42,7 +47,7 @@ export function setupNotebookViewport(viewport, spread, interrupt, onZoom = () =
   });
   scene.addEventListener('pointerdown', event => {
     if (viewport.closest?.('[hidden]') || event.target.closest?.('.notebook-heading, .page-navigation, .notebook-workbench, .hud-panel, .cover-tools, dialog')) return;
-    const leftDrag = event.button === 0 && event.pointerType === 'mouse' && (event.ctrlKey || viewport.dataset?.pan === 'true');
+    const leftDrag = event.button === 0 && ((event.pointerType === 'mouse' && event.ctrlKey) || viewport.dataset?.pan === 'true');
     if (event.button !== 2 && !leftDrag) return;
     if (leftDrag) event.preventDefault();
     gesture = { id: event.pointerId, button: leftDrag ? 1 : 2, ctrl: Boolean(event.ctrlKey), x: event.clientX, y: event.clientY, moved: false };

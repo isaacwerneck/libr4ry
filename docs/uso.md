@@ -51,7 +51,7 @@ Folhas pequenas, médias e grandes têm capacidades de referência diferentes. A
 
 ## Enquadramento e atalhos
 
-O caderno aberto mantém duas faces sobre uma mesa fixa. Para alcançar uma região fora da tela, mova o caderno ou use os controles de enquadramento.
+O caderno aberto mantém duas faces sobre uma mesa fixa. Ao abrir, a câmera aproxima a folha ativa; **Ver inteiro** mostra o objeto completo, e **Ajustar largura** ou **Voltar à escrita** enquadram a folha. Ao redimensionar a janela, o modo automático se ajusta; zoom escolhido manualmente é preservado. No celular, a largura do texto se adapta à leitura, sem repartir as páginas existentes. As ferramentas iniciam recolhidas. Para alcançar outra região, ative **Mover caderno** e arraste com mouse ou toque; Escape encerra o deslocamento.
 
 | Ação | Atalho |
 | --- | --- |
