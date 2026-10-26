@@ -6,6 +6,16 @@ Consolidação das respostas do proprietário e pesquisa aplicada, atualizada em
 
 ## Decisões complementares e exemplos visuais
 
+### Foco coerente com a superfície — 17/10/2026
+
+Corrigida a prioridade do CSS: a regra antiga de button:focus-visible mantinha o contorno verde apesar do tema marrom. Controles claros agora usam marrom; elementos sobre madeira/cabeçalho escuro usam creme, incluindo novo caderno, capas/ações, estantes, destinos, navegação social e cabeçalho do editor. Mantidos largura de 3 px, afastamento e regras específicas de edição das folhas. O foco genérico continua disponível para outros elementos, sem substituir relevo/sombras.
+
+Navegador confirmou antes RGB 108/136/65 em Novo caderno; depois RGB 255/242/215 com Tab, 3 px e focus-visible ativo. Próximo Tab na busca confirmou RGB 148/102/62 sobre campo claro. Captura keyboard-focus-wood.png registra o estado. Conferência pontual de cascata/teclado; não é auditoria completa de contraste WCAG, texturas ou leitores de tela.
+
+### Entradas discretas do portal — 15/10/2026
+
+Início, Estantes, Perfil, Social e Progresso recebem entrada de 160 ms por opacidade, assim como a abertura de diálogos. Sem escala, deslocamento ou espera para aceitar cliques; layouts e estados finais permanecem os mesmos. Aplicada somente em prefers-reduced-motion: no-preference; a regra global de redução também desativa animações. Tons marrons/creme e controles retrô preservados. Esta é uma escolha de acabamento, sem alegação de melhora medida de desempenho ou de conforto com participantes.
+
 ### Refinamento do portal e câmera — 13/10/2026
 
 Capa clicável e informações/ações agora são elementos irmãos em grid: o centro da capa abre o caderno, enquanto Organizar e favorito têm áreas próprias, sem posição absoluta. Metadados ficam próximos da capa e grupos longos quebram linha. Perfil mostra as quatro métricas reais já calculadas no Progresso, com painéis ajustados ao conteúdo. Controles, destinos e retomada usam cantos e estados consistentes; seleção de abas ganha peso e borda, favorito ganha preenchimento. Madeira tem veios mais suaves e repetição maior; livros do login recebem lombadas e bordas de papel mais definidas. Entrada móvel reduz a faixa de marca e elimina espaço residual de erro vazio.

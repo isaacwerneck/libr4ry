@@ -4,6 +4,36 @@
 
 O modelo conceitual abaixo orienta o produto. A implementação inicial foi aplicada localmente: a fonte executável e exata é [db/001-foundation.sql](../db/001-foundation.sql). Referências de produto: [proposta](proposta.md) e [requisitos](requisitos-funcionais.md).
 
+## Moderação — 22/10/2026
+
+A [migração 004](../db/004-moderation.sql) acrescenta social_reports. Mantém motivo, detalhes de até 2000 caracteres, cópia do texto público, referências à publicação/denunciante, horário de resolução e administrador responsável. Referências usam SET NULL na exclusão; o texto denunciado permanece para revisão mesmo quando o autor remove a publicação. Unicidade por denunciante/publicação e trava transacional limitam duplicação e a cinco novas denúncias por minuto. O ID da denúncia também não pode ser reutilizado por outra conta.
+
+Somente IDs explicitamente configurados em MODERATOR_USER_IDS acessam a fila e resolvem registros. Não há consulta de cadernos ou mensagens por essa API. Limpeza remove resolvidas com mais de 90 dias; ocorre na moderação e diariamente pela Function report-retention no deploy publicado. A configuração remota da agenda ainda precisa ser validada. Backups anteriores seguem sua retenção operacional separada, ainda pendente.
+
+## Recuperação de conta — 15/10/2026
+
+A [migração 003](../db/003-password-reset.sql) cria password_resets: hash SHA-256 do token como chave primária, owner_id com FK para users, criação, expiração de 30 minutos e consumed_at. Tokens legíveis só são enviados ao provedor de e-mail; não ficam no SQL. Emissões são serializadas por usuário, limitadas a três/hora; registros com mais de 24 horas são limpos na solicitação. Redefinição consome o token uma vez, atualiza o hash scrypt e revoga sessões na mesma transação, sem tocar em keysets ou cadernos. Login usa o mesmo bloqueio do usuário para impedir criar sessão com senha antiga após uma redefinição concorrente.
+
+## Compartilhamento e colaboração — 23/10/2026
+
+As migrações [005](../db/005-collaboration.sql) e [006](../db/006-personal-notebook-settings.sql) adicionam chaves ECDH por usuário, compartilhamento no caderno original, ACL, atualizações/snapshots Yjs cifrados e preferências pessoais por participante. No banco, `shared_notebooks` guarda visibilidade, título/chave pública somente quando o dono opta por publicar, snapshot cifrado e posição de compactação. `notebook_access` é a whitelist (`reader`/`editor`) ou blacklist (`blocked`). `collaboration_updates` mantém atualizações cifradas e idempotentes; `collaboration_snapshots` retém até cinco versões para recuperar como cópia. `sharing_keys` guarda a chave pública e envelope privado protegido pela raiz da própria conta; `notebook_personal` cifra organização e preferências próprias do participante.
+
+Contas autenticadas podem ler cadernos públicos. O dono e pessoas na whitelist podem editar o mesmo caderno; uma blacklist e o bloqueio social impedem o acesso. Privados são invisíveis a quem não recebeu acesso. A chave do caderno é envolvida individualmente via ECDH; a senha de conteúdo do dono nunca é transmitida. Hocuspocus encaminha atualizações e presença por WebSocket, mas não recebe o documento Yjs em claro: a sala externa fica vazia e os envelopes trafegados estão cifrados no navegador. O backend revalida sessão e autorização antes de receber/entregar cada mensagem e grava atualizações no Neon antes de difundi-las. Revogar acesso impede requisições e sincronizações seguintes; não revoga cópias já lidas.
+
+## Social implementado — 14/10/2026
+
+A [migração 002](../db/002-social.sql) acrescenta `social_posts`, `friendships`, `social_blocks` e `social_messages`, separadas dos envelopes privados. O runner aplica 001 e 002 com registro por versão, sem recriar as tabelas existentes. Esta seção substitui o adiamento do social nas propostas históricas abaixo.
+
+Publicação contém UUID, autor, título (até 120), texto (até 12.000) e horário do servidor. O autor envia uma cópia revisada; nenhuma consulta social abre cadernos. Feed autenticado usa páginas de 20 registros e cursor por horário/UUID. Autor pode retirar sua própria publicação. Busca por nome retorna até 30 pessoas com nome/UUID e relação com o solicitante, sem e-mail, keyset ou biblioteca.
+
+Amizade tem par ordenado único de UUIDs, solicitante e aceite. Só o destinatário aceita. Mensagens exigem amizade aceita e ausência de bloqueio; só participantes consultam. Histórico usa lotes de 50 e cursor. UUID estável em mensagem/publicação impede duplicar reenvio idêntico, rejeitando reutilização com texto diferente ou autor diferente. Limites de frequência serializam operações por remetente no banco e aceitam reenvio idêntico já confirmado mesmo na cota; convites, bloqueios e mensagens usam o mesmo lock do par para resolver concorrência.
+
+Bloqueio remove a amizade e impede contato nos dois sentidos, inclusive leitura de conversa pela API enquanto bloqueado. Desbloquear não aceita amizade automaticamente. Mensagens antigas permanecem no banco e podem voltar a ser consultadas se ambos aceitarem nova amizade; não existe exclusão de histórico de conversa nesta entrega. Texto público e mensagens usam renderização literal com `textContent`, sem HTML executável.
+
+**Mensagens sociais não têm criptografia de ponta a ponta.** São legíveis ao operador do banco, ao contrário dos cadernos. Não registrar conteúdo em logs. A hospedagem deve proteger banco/backups e definir retenção/moderação. A API aplica autorização; não há RLS que restrinja um administrador SQL.
+
+Data opcional da folha (`YYYY-MM-DD`) integra o payload cifrado de página, não uma coluna pública. Leitura, salvamento, versões e undo/redo preservam compatibilidade com páginas antigas sem data.
+
 ## Implementação local atual
 
 PostgreSQL 17.5, instância separada na porta 5547, schema `library4`. Tabelas: `users`, `sessions`, `user_keysets`, `notebooks`, `pages`, `page_versions`, `tasks`, `notebook_mutations`; controle de migração em `public.library4_migrations`.
@@ -11,14 +41,14 @@ PostgreSQL 17.5, instância separada na porta 5547, schema `library4`. Tabelas: 
 - Envelopes reais são `JSONB` com `{v:1, iv:base64, data:base64}`. AES-GCM usa nonce aleatório de 12 bytes e tag de 128 bits no campo `data`; AAD vincula o contexto informado pelo cliente. O desenho binário conceitual abaixo não é o formato executado.
 - Conta guarda e-mail, nome de exibição e hash scrypt. Sessão guarda somente hash SHA-256 do token, com validade de sete dias. Conta e horários são metadados operacionais visíveis, não conteúdo de caderno.
 - Um keyset por proprietário guarda `root_envelope` com envelope AES-GCM e parâmetros `kdf`: PBKDF2, SHA-256, 600.000 iterações, salt aleatório de 16 bytes. A senha de conteúdo aprovada deriva uma chave somente no navegador. Caderno guarda `wrapped_key` e `encrypted_metadata`; não há chave legível armazenada. AAD vincula raiz a conta/keyset; demais envelopes a proprietário, caderno, entidade e revisão.
-- Página referencia a versão atual com FK diferida; posições únicas diferidas permitem reordenação atômica. Criação do caderno, página e versão inicial é uma transação.
+- Página referencia a versão atual com FK diferida; posições únicas diferidas permitem reordenação atômica. Criação do caderno, página, versão inicial e recibo é uma transação. O recibo em `notebook_mutations` usa o ID do caderno como identificador da criação e hash do pedido cifrado normalizado. Pedidos idênticos, inclusive concorrentes, retornam a confirmação inicial; outro proprietário ou conteúdo diferente recebe conflito, sem sobrescrever o caderno. Recibo continua válido após salvamentos posteriores.
 - Salvamento bloqueia a linha do caderno, compara revisão esperada e grava páginas/metas/metadados conjuntamente. `notebook_mutations` registra identificador, hash da requisição e resultado: repetição idêntica retorna o mesmo resultado; conteúdo diferente com mesmo identificador é rejeitado.
-- A API consulta até 50 versões por página e remove versões mais antigas ao salvar. Recibos de mutação ainda não expiram; definir retenção antes de uso amplo. Não há exclusão de caderno nem tabelas sociais antecipadas.
+- A API consulta até 50 versões por página e remove versões mais antigas ao salvar. Recibos de mutação ainda não expiram; definir retenção antes de uso amplo. Não há exclusão de caderno; o social atual está descrito na seção acima.
 - Organização inicial usa `organization: { shelves: string[], favorite: boolean }` dentro do envelope `encrypted_metadata`. Nomes/associações não são colunas SQL legíveis; comparação, busca e agrupamento acontecem após desbloqueio. Padrão de caderno antigo: lista vazia/favorito falso. Estantes independentes vazias e renomeação coletiva exigem evolução posterior; esta rodada não cria tabelas nem muda revisão/idempotência.
 - Preferências cifradas incluem `ruling`, `desk`, `light`, `binding` e `reminder`, com opções enumeradas e defaults compatíveis. Estilos de trecho ficam na string `content` da página como extensão restrita de Markdown; envelopes, versões, AAD e revisão não mudam. Busca de páginas ocorre somente após desbloqueio, sem colunas/índices SQL de texto privado.
 - Revisão visual: `coverColor` aceita somente hexadecimal de seis dígitos ou vazio e `finish` somente `leather/cloth/smooth`, dentro das mesmas preferências cifradas. Tiptap exporta para a string Markdown da página; não há JSON de editor legível no SQL. Marcador visual `{{l4;fonte;tinta;tamanho}}Markdown{{/l4}}` usa opções enumeradas e preserva estilos antigos literais. Capa/contracapa são estados da interface, sem registros extras em `pages` ou contagem de produção. Nenhuma migração nesta rodada.
 
-Testes contra o banco real verificam autorização entre contas, conflitos, repetição de requisição, histórico e criação atômica. Não existe publicação implementada nem promessa de recuperação de conteúdo sem o segredo do usuário.
+Testes contra o banco real verificam autorização entre contas, conflitos, repetição de requisição, histórico e criação atômica. A publicação atual usa cópia revisada de texto, sem compartilhar chaves privadas. Não existe recuperação de notas sem o segredo do usuário.
 
 ## 1. Escolhas de desenho
 

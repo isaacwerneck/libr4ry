@@ -130,7 +130,7 @@ html:has(body.studying) { overflow: clip; }
 .studying .page-index .page-link.active { background: #e1cfaa; border-left-color: #805336; color: var(--ink); }
 .studying .paper {
   /* Keep fine marks above subpixel disappearance without scaling the page's spacing. */
-  --paper-stroke: max(1px, calc(.65px / var(--book-zoom, 1)));
+  --paper-stroke: max(1px, calc(1px / var(--book-zoom, 1)));
   --paper-dot: max(.8px, calc(.85px / var(--book-zoom, 1)));
   --paper-grain: radial-gradient(#94774c09 max(.6px, calc(.3px / var(--book-zoom, 1))), transparent max(.8px, calc(.9px / var(--book-zoom, 1))));
   --paper-grain-size: max(5px, calc(2px / var(--book-zoom, 1)));
@@ -151,10 +151,12 @@ html:has(body.studying) { overflow: clip; }
  .studying .paper-stage > .paper { border-radius: 5px 18px 18px 5px; }
 .studying .paper:not(.book-face)::before { display: none; }
 .studying .paper::after { content: ''; position: absolute; top: 18px; bottom: 18px; left: -14px; border-left: 1px dashed #bd997355; pointer-events: none; }
-.studying .paper-top { font-size: 10px; letter-spacing: 1px; padding-bottom: 18px; border-color: #bba17b66; border-bottom-width: var(--paper-stroke); }
-.studying .paper-bottom { border-top-width: var(--paper-stroke); }
+.studying .paper-top { font-size: 10px; letter-spacing: 1px; padding-bottom: 18px; border-color: #bba17b66; border-bottom-width: 0; }
+.studying .paper-bottom { border-top-width: 0; }
 .studying .page-title { font-size: 28px; margin: 26px 0; line-height: 1.4; padding: 0; color: var(--ink); }
 .studying .page-title::placeholder, .studying textarea::placeholder { color: #806c55; }
+/* Sem título, a escrita começa direto na folha; o campo continua acessível pelo teclado. */
+.studying .paper .page-title:placeholder-shown:not(:focus) { height: 0; min-height: 0; margin: 0; padding: 0; border: 0; overflow: hidden; }
 .studying button:focus-visible, .studying input:focus-visible, .studying select:focus-visible, .studying textarea:focus-visible, .studying .markdown:focus-visible { outline-color: #805336; }
 .studying .page-title:focus-visible { outline: 0; box-shadow: 0 2px 0 #805336; }
 .studying .paper textarea:focus-visible { outline: 0; box-shadow: inset 0 1px 0 #80533666; }
@@ -245,7 +247,6 @@ html:has(body.studying) { overflow: clip; }
 .studying[data-light="night"] { --desk-light: #d7983f28; --scene-light: radial-gradient(ellipse at 25% 8%, #ffcd6724, transparent 58%), linear-gradient(130deg, #211d2914, #211d2933); background-color: color-mix(in srgb, var(--desk-base), #201d23 35%); }
 .studying[data-light="warm"] { --scene-light: radial-gradient(ellipse at 22% 8%, #ffc66a22, transparent 62%), linear-gradient(130deg, transparent 50%, #30221c0a); }
 .studying[data-light="day"] .paper { border-color: #f2e2c4; }
-.studying[data-light="night"] .notebook-heading { background: #30251c55; }
 .studying .page-index { max-height: none; overflow: visible; border: 0; }
 .page-search-label { display: grid; gap: 8px; font-size: 12px; color: var(--muted); }
 .page-search-label input { min-width: 0; width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: 6px; background: #fffaf044; padding: 10px; color: var(--ink); }
@@ -263,6 +264,13 @@ html:has(body.studying) { overflow: clip; }
 .study-font-serif { font-family: Georgia, 'Times New Roman', serif; }
 .study-font-mono { font-family: 'Cascadia Code', Consolas, monospace; }
 .study-font-hand { font-family: 'Segoe Print', 'Bradley Hand', cursive; }
+.study-font-book { font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif; }
+.study-font-humanist { font-family: 'Trebuchet MS', 'Gill Sans', sans-serif; }
+.study-font-typewriter { font-family: 'Courier New', Courier, monospace; }
+.studying[data-font="book"] { --writing-font: 'Palatino Linotype', 'Book Antiqua', Palatino, serif; }
+.studying[data-font="humanist"] { --writing-font: 'Trebuchet MS', 'Gill Sans', sans-serif; }
+.studying[data-font="typewriter"] { --writing-font: 'Courier New', Courier, monospace; }
+.studying[data-desk="felt"] { background-image: url('/material-grain.svg'), radial-gradient(ellipse at 18% 0, var(--desk-light), transparent 75%); background-size: 120px 120px, auto; }
 .studying[data-font="hand"] { --writing-font: 'Segoe Print', 'Bradley Hand', cursive; }
 .studying[data-binding="spiral"] .paper::after {
   display: block; left: -25px; top: 48px; bottom: 48px; width: 24px; border: 0;
@@ -281,6 +289,7 @@ html:has(body.studying) { overflow: clip; }
 .study-reminder { position: fixed; top: 80px; right: 20px; z-index: 6; width: min(300px, calc(100vw - 40px)); padding: 18px; background: #fbf4e5; color: #38291f; border-radius: 12px; box-shadow: 0 8px 24px #271a1326; font-size: 13px; }
 .study-reminder p { line-height: 1.6; }
 .study-reminder .text-button { min-height: 44px; color: #71513a; }
+.study-ink-custom { color: var(--study-ink, #38291f); }
 .study-ink-ink { color: #38291f; }
 .study-ink-rust { color: #823d25; }
 .study-ink-blue { color: #294f73; }
@@ -298,6 +307,17 @@ html:has(body.studying) { overflow: clip; }
 .caret-measure { position: absolute; visibility: hidden; pointer-events: none; top: 0; left: 0; }
 .studying[data-paper="white"] { --paper: #fffdf6; }
 .studying[data-paper="sand"] { --paper: #f0dfbc; }
+.studying[data-paper="ivory"] { --paper: #f3eee0; }
+.studying[data-paper="sage"] { --paper: #e9ecdc; }
+.studying[data-paper="rose"] { --paper: #f3e5dc; }
+.studying[data-paper="mist"] { --paper: #e7eceb; }
+.studying[data-cover="moss"] { --cover: #48563d; --cover-edge: #879272; }
+.studying[data-cover="wine"] { --cover: #633942; --cover-edge: #a8787c; }
+.studying[data-cover="espresso"] { --cover: #382a25; --cover-edge: #8a7160; }
+.studying[data-desk="oak"] { --desk-base: #a17b50; }
+.studying[data-desk="cherry"] { --desk-base: #754d3b; }
+.studying[data-desk="espresso"] { --desk-base: #342b26; }
+.studying[data-desk="felt"] { --desk-base: #465344; }
 .studying[data-cover="clay"] { --cover: #7e4839; --cover-edge: #b4775d; }
 .studying[data-cover="slate"] { --cover: #3d4e57; --cover-edge: #73838a; }
 .studying[data-font="serif"] { --writing-font: Georgia, 'Times New Roman', serif; }
@@ -313,12 +333,15 @@ html:has(body.studying) { overflow: clip; }
 .book-face h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(28px, 3.4vw, 42px); line-height: 1.18; letter-spacing: -.8px; overflow-wrap: anywhere; max-width: 100%; margin: 40px 0 0; text-wrap: balance; }
 .book-face p { font-size: 14px; margin: 0; opacity: .8; }
 .cover-label { font-size: 10px; letter-spacing: 2px; }
-.studying .book-face[data-material="leather"][data-face] { --cover-texture: radial-gradient(ellipse at 30% 25%, #fff4dd0a 0 .7px, transparent 1.3px), radial-gradient(ellipse at 70% 65%, #17100c12 0 .6px, transparent 1.4px); background-size: 7px 9px, 11px 13px, auto; }
-.studying .book-face[data-material="cloth"][data-face] { --cover-texture: repeating-linear-gradient(0deg, #fff4dd0d 0 1px, transparent 1px 4px), repeating-linear-gradient(90deg, #211b181a 0 1px, transparent 1px 4px); background-size: 4px 4px, 4px 4px, auto; }
-.studying .book-face[data-material="smooth"][data-face] { --cover-texture: linear-gradient(130deg, #fff4dd0d, transparent 60%); background-size: auto; }
+.studying .book-face[data-material="leather"][data-face] { --cover-sheen: none; --cover-texture: radial-gradient(ellipse at 30% 25%, #fff4dd0a 0 .7px, transparent 1.3px), radial-gradient(ellipse at 70% 65%, #17100c12 0 .6px, transparent 1.4px); background-size: 7px 9px, 11px 13px, auto; }
+.studying .book-face[data-material="cloth"][data-face] { --cover-sheen: none; --cover-texture: repeating-linear-gradient(0deg, #fff4dd0d 0 1px, transparent 1px 4px), repeating-linear-gradient(90deg, #211b181a 0 1px, transparent 1px 4px); background-size: 4px 4px, 4px 4px, auto; }
+.studying .book-face[data-material="smooth"][data-face] { --cover-texture: none; --cover-sheen: linear-gradient(130deg, #fff4dd0d, transparent 60%); background-size: auto; }
 .studying .book-face[data-texture="fine"][data-face] { background-size: 3px 3px, 5px 5px, auto; }
-.studying .book-face[data-texture="none"][data-face] { background-image: linear-gradient(110deg, #ffffff08, transparent 45%, #211b1820); background-size: auto; }
-.book-face > h2, .book-face > p, .book-face > .cover-label, .book-face > .cover-open { position: relative; z-index: 2; }
+.studying .book-face[data-texture="none"][data-face] { --cover-texture: none; background-size: auto; }
+.book-face > h2, .book-face > p, .book-face > .cover-label { position: relative; z-index: 2; }
+/* O acabamento cobre a impressão inteira, inclusive imagens opacas e faces clonadas da virada. */
+.studying .book-face > .cover-light { position: absolute; inset: 0; z-index: 4; border-radius: inherit; pointer-events: none; background-image: var(--cover-texture); background-size: inherit; }
+.studying .book-face > .cover-light::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background-image: var(--cover-sheen, none), var(--cover-shade); }
 .book-face [contenteditable="plaintext-only"] { cursor: text; border-radius: 4px; outline: 1px dashed transparent; transition: outline-color 160ms; }
 .book-face [contenteditable="plaintext-only"]:hover { outline-color: #fff5df44; }
 .book-face [contenteditable="plaintext-only"]:focus { outline-color: #fff5df99; background: #fff5df0a; }
@@ -348,18 +371,17 @@ html:has(body.studying) { overflow: clip; }
 body:not(.studying) .cover-tools { display: none; }
 @media (max-width: 600px) { .cover-tools { top: 130px; right: 10px; width: 154px; padding: 12px; max-height: 300px; } }
 @media (prefers-reduced-motion: reduce) { .cover-tools button, .book-face [contenteditable] { transition: none; } }
-.cover-open { color: inherit; background: #ffffff06; border: 1px solid #fff5df44; min-height: 44px; border-radius: 8px; padding: 8px 16px; margin-top: auto; }
 .studying .book-face::before { left: 42px; top: 24px; bottom: 24px; right: 24px; width: auto; border: 1px solid #fff5df18; border-radius: 3px 10px 10px 3px; background: transparent; display: block; }
 .studying .book-face::after { display: block; left: 0; top: 0; bottom: 0; width: 28px; border: 0; border-radius: 6px 0 0 6px; background: linear-gradient(90deg, #201a184d, #ffffff0a 45%, #201a1826 78%, transparent); box-shadow: 1px 0 0 #ffffff0d; }
+.studying[data-binding="stitched"] .book-face::after { bottom: -8px; background: linear-gradient(90deg, #0000004d, #ffffff0a 45%, #00000026 78%, transparent), var(--cover); box-shadow: inset 1px 0 0 #ffffff0a, 1px 0 0 #00000024; }
 .studying[data-binding="spiral"] .book-face::after { left: 4px; top: 24px; bottom: 24px; width: 24px; border-radius: 0; box-shadow: none; background-image: radial-gradient(ellipse 9px 5px at center, transparent 48%, #cfc3a5 53% 67%, #30251c 72% 78%, transparent 82%); background-size: 24px 32px; }
 .studying[data-binding="soft"] .book-face::after { border: 0; background: linear-gradient(90deg, #201a1833, transparent); }
 body.studying .book-face[data-face="back"] { border-radius: 18px 7px 7px 18px; padding-left: 52px; padding-right: 64px; }
-.studying .book-face[data-face="back"]::after { left: auto; right: 0; border-radius: 0 6px 6px 0; transform: scaleX(-1); }
+.studying .book-face[data-face="back"]::after { left: auto; right: 0; transform: scaleX(-1); }
 .studying .book-face[data-face="back"]::before { left: 24px; right: 42px; border-radius: 10px 3px 3px 10px; }
 .studying[data-binding="spiral"] .book-face[data-face="back"]::after { right: 4px; }
 .book-face[data-face="back"] .cover-label { margin-top: auto; order: 3; align-self: center; opacity: .55; font-size: 9px; letter-spacing: 3px; }
 .book-face[data-face="back"] h2 { font-size: 24px; margin-top: 40px; line-height: 1.45; }
-.book-face[data-face="back"] .cover-open { order: 4; margin-top: 18px; }
 .cover-editing [contenteditable]:empty::before { content: attr(data-placeholder); opacity: .45; }
 .studying .paper.cover-inside { background: linear-gradient(90deg, #bca67b33, transparent 7%, transparent 93%, #bca67b22), #efe3ca; border: 1px solid #dfcfaf; --ruling-image: none; }
 .studying[data-finish="cloth"] { --cover-texture: repeating-linear-gradient(0deg, #fff4dd0d 0 1px, transparent 1px 4px), repeating-linear-gradient(90deg, #211b181a 0 1px, transparent 1px 4px); }
@@ -435,7 +457,6 @@ body.studying .book-face[data-face="back"] { border-radius: 18px 7px 7px 18px; p
 .studying button svg, .studying summary svg { width: 18px; height: 18px; flex-shrink: 0; vertical-align: middle; }
 .studying [data-format="italic"] { font-family: Georgia, serif; font-style: italic; font-size: 18px; }
 .studying [data-format="bold"] { font-size: 16px; font-weight: 750; }
-.studying .notebook-heading { background: linear-gradient(#6b4b332b, transparent); }
 .studying .writing-tools, .studying .hud-panel {
   border: 1px solid #fff8e559; border-radius: 16px;
   background-image: linear-gradient(145deg, #fff8e538, transparent 55%);
@@ -461,20 +482,21 @@ body.studying .book-face[data-face="back"] { border-radius: 18px 7px 7px 18px; p
 .studying .page-navigation .add-page { border-radius: 0 18px 18px 0; }
 .studying .book-face {
   --cover-texture: radial-gradient(ellipse at 25% 25%, #fff5df0a 0 1px, transparent 1.8px), radial-gradient(ellipse at 70% 65%, #1b100d1c 0 .7px, transparent 1.6px);
-  background-image: var(--cover-texture), linear-gradient(105deg, #140e0a20, #fff1d90c 18%, transparent 48%, #140e0a26);
+  --cover-shade: linear-gradient(105deg, #140e0a20, #fff1d90c 18%, transparent 48%, #140e0a26);
+  background-image: none;
   background-size: 7px 9px, 11px 13px, auto;
   border-color: color-mix(in srgb, var(--cover), #f9e2b8 28%);
 }
 .studying .book-face::before { border-color: #f6d5a52b; box-shadow: inset 0 1px 1px #190f0a29, 0 1px 0 #fff4dd0b; }
 .studying .book-face h2 { color: #f7e6c6; text-shadow: 0 1px 0 #fff5df24, 0 2px 2px #1f140e66; }
 .studying .cover-label { color: #e6cda3; letter-spacing: 2.5px; }
-.studying .cover-open { border-color: #efd7ac55; background: #fff3d508; box-shadow: inset 0 1px 0 #fff5df15, 0 3px 9px #1b110c1a; }
 .studying[data-finish="cloth"] .book-face {
   --cover-texture: repeating-linear-gradient(0deg, #fff4dd14 0 1px, transparent 1px 4px), repeating-linear-gradient(90deg, #211b1826 0 1px, transparent 1px 4px);
   background-size: 4px 4px, 4px 4px, auto;
 }
 .studying[data-finish="smooth"] .book-face {
-  --cover-texture: linear-gradient(135deg, #fff4dd14, transparent 50%), radial-gradient(ellipse at 90% 100%, #160f1226, transparent 65%);
+  --cover-texture: none;
+  --cover-sheen: linear-gradient(135deg, #fff4dd14, transparent 50%), radial-gradient(ellipse at 90% 100%, #160f1226, transparent 65%);
   background-size: auto;
 }
 .studying[data-binding="soft"] .book-face { border-radius: 8px 24px 24px 8px; }
@@ -486,7 +508,6 @@ body.studying .book-face[data-face="back"] { border-radius: 18px 7px 7px 18px; p
   .studying .format-tools button:not(:disabled):active, .studying .page-navigation button:not(:disabled):active { transform: translateY(1px) scale(.94); }
   .studying .page-navigation button:not(:disabled):hover { background: #80533612; }
   .studying .ink-tools button:hover { transform: translateY(-2px) scale(1.1); }
-  .studying .cover-open:hover { background: #fff3d518; border-color: #efd7ac99; }
 }
 @media (prefers-reduced-motion: reduce) {
   .studying button, .studying summary, .studying .writing-tools { transition: none !important; }

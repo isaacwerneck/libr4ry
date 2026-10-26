@@ -107,7 +107,8 @@ export function recoverDraft(book, draft) {
 export async function clearDraft(book, store = draftStore) {
   if (book.draftRunning) await book.draftRunning;
   if (book.generation !== book.confirmed || book.batch) return;
-  for (const record of [book.localDraft, book.recoveredDraft]) if (record) await store('remove', record);
-  book.localDraft = null;
-  book.recoveredDraft = null;
+  const { localDraft, recoveredDraft } = book;
+  for (const record of [localDraft, recoveredDraft]) if (record) await store('remove', record);
+  if (book.localDraft === localDraft) book.localDraft = null;
+  if (book.recoveredDraft === recoveredDraft) book.recoveredDraft = null;
 }

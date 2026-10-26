@@ -1,15 +1,20 @@
 import { planPageEdit, protectedBlocks, pageCapacity, countLines, countWords, visiblePages, bookOpening, adjacentOpening } from './pagination.js';
 import markdownit from '/markdown-it.mjs';
 import { createRoot, unlockRoot } from './crypto.js';
-import { api, createBook, loadBook, saveBook, versions, pageData } from './storage.js';
+import { api, createBook, loadBook, saveBook, versions, pageData, pageDate, metadata } from './storage.js';
 import { capturePaper, turnPaper, stopPaperMotion, setupPageCorner } from './notebook-motion.js';
-import { preferences, recentPosition } from './notebook-preferences.js';
+import { preferences, recentPosition, COVER_COLORS } from './notebook-preferences.js';
 import { protectBook, readDrafts, recoverDraft, clearDraft, draftStore } from './drafts.js';
 import { seal, open } from './crypto.js';
-import { setupNotebookViewport, fitZoom, fitNotebookHeight, positionNotebook, centerNotebookRect, matchNotebookCover, revealNotebookRect } from './notebook-viewport.js';
+import { setupNotebookViewport, fitZoom, fitNotebookHeight, positionNotebook, centerNotebookRect, matchNotebookCover, revealNotebookRect, animateNotebookCamera, stopNotebookCamera } from './notebook-viewport.js';
 import { rememberEdit, restoreEdit, formatSelection } from './edit-history.js';
 import { organization, collectionShelves, collectionBooks } from './collection.js';
-import { installStudyStyles, styledSelection, styleRanges, plainStudyText, continueLine, findNotebookPages, INKS, validInk, rgbInk, writingShortcut } from './notebook-writing.js';
+import { setupSocial } from './social.js';
+import { setupPasswordReset } from './password-reset.js';
+import { pauseForm } from './form-focus.js';
+import { setupNotebookFiles } from './notebook-files.js';
+import { setupSharing } from './sharing.js';
+import { installStudyStyles, styledSelection, styleRanges, plainStudyText, continueLine, findNotebookPages, INKS, validInk, rgbInk, writingShortcut, applyStudyColors } from './notebook-writing.js';
 import { createStudyReminder } from './notebook-reminder.js';
 import { createVisualEditor, createAmbientLight } from '/visual-editor.js';
 import { coverDesigns } from './cover-design.js';
@@ -17,13 +22,24 @@ import { createCoverEditor, decorateCover } from './cover-editor.js';
 
 const markdown = installStudyStyles(markdownit({ html: false, linkify: false, typographer: false }).disable('image'));
 const $ = id => document.getElementById(id);
+document.querySelector('.skip-link').addEventListener('click', event => {
+  event.preventDefault();
+  ($('workspace').hidden ? $('auth-main') : $('main')).focus();
+});
+function renderStudyPreview(element, content) {
+  element.innerHTML = markdown.render(content);
+  applyStudyColors(element);
+}
 const books = [];
 let currentBook;
 let currentPage;
 let signingUp = false;
 let session;
 let rootKey;
+const social = setupSocial({ api, user: () => session?.user, books: () => books, plainText: plainStudyText, profile: id => sharing.profile(id) });
 let editingBook;
+// shortcut: tentativa pendente só nesta aba; persistir cifrada se for preciso retomar após recarregar.
+let creatingBook;
 let historySelection;
 let styleSelection;
 let colorSelection;
@@ -115,6 +131,7 @@ for (const sheet of sheets) sheet.visual = createVisualEditor(field(sheet, 'page
   currentBook.visualError = null;
   const source = field(sheet, 'page-content');
   source.value = value; source.setSelectionRange(caret, caret);
+  if (currentBook.collaboration) { sheet.page.content=value; changed();fitWritingHeight([sheet]);renderPageControls();return; }
   if (composingSheet === sheet) {
     rememberEdit(currentBook, sheet.page.id, Math.min(caret, sheet.page.content.length), true);
     sheet.page.content = value; changed(); fitWritingHeight([sheet]); return;
@@ -151,6 +168,7 @@ function focusContent(sheet = activeSheet(), caret) {
 }
 const activeSheet = () => sheets.find(sheet => sheet.page === currentPage) || sheets[0];
 const stopNotebookMotion = () => {
+  stopNotebookCamera(viewport);
   sheets.forEach(sheet => { sheet.cancelCorners?.forEach(cancel => cancel()); stopPaperMotion(sheet.paper); });
   stopPaperMotion(coverFace);
   coverGestures.forEach(cancel => cancel());
@@ -163,6 +181,7 @@ viewport.setAttribute('role', 'region');
 viewport.setAttribute('aria-label', 'Enquadramento do caderno, use as setas para mover');
 spread.before(viewport);
 viewport.append(spread);
+for (const event of ['pointerdown', 'keydown', 'beforeinput']) viewport.addEventListener(event, () => stopNotebookCamera(viewport), { capture: true });
 function writingBounds() {
   const heading = document.querySelector('.notebook-heading').getBoundingClientRect();
   const tools = workbench.getBoundingClientRect();
@@ -181,8 +200,8 @@ coverFace.className = 'paper book-face';
 const coverLabel = document.createElement('span'); coverLabel.className = 'cover-label';
 const coverTitle = document.createElement('h2');
 const coverSubject = document.createElement('p');
-const openCover = document.createElement('button'); openCover.id = 'open-cover'; openCover.className = 'cover-open';
-coverFace.append(coverLabel, coverTitle, coverSubject, openCover);
+const coverLight = document.createElement('div'); coverLight.className = 'cover-light'; coverLight.setAttribute('aria-hidden', 'true');
+coverFace.append(coverLabel, coverTitle, coverSubject, coverLight);
 coverStage.append(coverFace); viewport.prepend(coverStage);
 const coverGestures = [];
 const coverEditor = createCoverEditor({ face: coverFace, title: coverTitle, subject: coverSubject,
@@ -206,27 +225,28 @@ function showBookFace(face, revealTools = true) {
   coverEditor.render();
   if (entering && !reading && revealTools && window.innerWidth > 720) { closeNotebookHud(); $('notebook-hud').open = true; }
   if (!face) return;
-  openCover.textContent = face === 'front' ? 'Abrir caderno' : 'Voltar às anotações';
   coverFace.dataset.face = face;
   $('page-total').textContent = face === 'front' ? 'Capa' : 'Contracapa';
   $('previous-page').disabled = face === 'front'; $('next-page').disabled = face === 'back';
 }
-openCover.addEventListener('click', () => navigateBook(bookFace === 'front' ? 1 : -1));
-const setViewportZoom = setupNotebookViewport(viewport, spread, stopNotebookMotion, zoom => {
+const setViewportZoom = setupNotebookViewport(viewport, spread, stopNotebookMotion, (zoom, before) => {
   notebookFrameMode = null;
   currentBook.preferences.zoom = zoom; $('notebook-zoom').value = Math.round(zoom * 100);
   $('zoom-value').textContent = Math.round(zoom * 100) + '%';
   document.body.style.setProperty('--book-zoom', zoom); fitWritingHeight(); changed();
+  animateNotebookCamera(viewport, before, spread.getBoundingClientRect(), currentBook.preferences.motion, window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 }, document.body);
 const setZoom = value => {
   const zoom = setViewportZoom(value);
   if (currentPage) fitCover();
   return zoom;
 };
-function frameNotebook(mode = notebookFrameMode || 'page') {
+function frameNotebook(mode = notebookFrameMode || 'page', smooth = false) {
   if (!currentPage || !document.body.classList.contains('studying')) return;
   notebookFrameMode = mode;
   const target = bookFace ? coverFace : mode === 'whole' ? spread : activeSheet().paper;
+  const before = target.getBoundingClientRect();
+  stopNotebookCamera(viewport);
   const bounds = writingBounds();
   const rectangle = target.getBoundingClientRect();
   const scale = currentBook.preferences.zoom;
@@ -242,11 +262,15 @@ function frameNotebook(mode = notebookFrameMode || 'page') {
   $('notebook-zoom').value = Math.round(zoom * 100);
   $('zoom-value').textContent = Math.round(zoom * 100) + '%';
   centerNotebook();
+  if (smooth) animateNotebookCamera(viewport, before, target.getBoundingClientRect(), currentBook.preferences.motion, window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 }
-function centerNotebook() {
+function centerNotebook(smooth = false) {
   const target = bookFace ? coverFace : notebookFrameMode === 'whole' ? spread : activeSheet().paper;
+  const before = target.getBoundingClientRect();
+  stopNotebookCamera(viewport);
   const inset = !bookFace && notebookFrameMode !== 'whole' && window.innerWidth <= 720 ? 64 * currentBook.preferences.zoom : 0;
   centerNotebookRect(viewport, target.getBoundingClientRect(), writingBounds(), inset);
+  if (smooth) animateNotebookCamera(viewport, before, target.getBoundingClientRect(), currentBook.preferences.motion, window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 }
 function setNotebookPan(enabled) {
   viewport.dataset.pan = String(enabled);
@@ -275,7 +299,7 @@ function applyAppearance() {
     document.body.style.setProperty('--cover', value.coverColor);
     document.body.style.setProperty('--cover-edge', `color-mix(in srgb, ${value.coverColor}, #fff4dd 30%)`);
   }
-  $('cover-color').value = value.coverColor || { walnut: '#50392d', clay: '#7e4839', slate: '#3d4e57' }[value.cover];
+  $('cover-color').value = value.coverColor || COVER_COLORS[value.cover];
   $('cover-finish').value = value.finish;
   document.body.style.setProperty('--book-zoom', value.zoom);
   for (const [id, name] of [['paper-style', 'paper'], ['cover-style', 'cover'], ['writing-font', 'font'],
@@ -314,10 +338,12 @@ async function protectDraft(book) {
   renderSaveState();
 }
 
+let notificationTimer;
 function notify(message) {
+  clearTimeout(notificationTimer);
   $('notification').textContent = message;
   $('notification').hidden = false;
-  setTimeout(() => { $('notification').hidden = true; }, 5000);
+  notificationTimer = setTimeout(() => { $('notification').hidden = true; }, 5000);
 }
 
 function showView(view, record = true) {
@@ -341,6 +367,7 @@ function showView(view, record = true) {
   if (view !== 'notebook') { renderPortal(); window.scrollTo(0, 0); }
   if (record && location.hash !== '#' + view) history.pushState({ view }, '', '#' + view);
   updateStudyReminder();
+  if (view === 'social') social.refresh();
 }
 
 function renderPortal() {
@@ -365,10 +392,6 @@ window.addEventListener('popstate', () => {
   if ($('workspace').hidden) return;
   if (currentBook?.visualError) { history.pushState({ view: 'notebook' }, '', '#notebook'); notify('Resolva a edição visual pendente antes de sair da folha.'); return; }
   showView(location.hash.slice(1), false);
-});
-for (const control of document.querySelectorAll('[data-social]')) control.addEventListener('click', () => {
-  for (const button of document.querySelectorAll('[data-social]')) button.setAttribute('aria-pressed', String(button === control));
-  for (const panel of document.querySelectorAll('[data-social-panel]')) panel.hidden = panel.dataset.socialPanel !== control.dataset.social;
 });
 
 function button(text, className, action) {
@@ -445,10 +468,14 @@ function renderCollection() {
     const pageCount = document.createElement('span');
     pageCount.textContent = `${book.pages.length} páginas`;
     bottom.append(pageCount);
-    cover.append(number, title, subject, bottom);
+    const heading = document.createElement('div');
+    heading.className = 'collection-cover-heading';
+    heading.append(title, subject);
+    cover.append(number, heading, bottom);
     const meta = document.createElement('div');
     meta.className = 'card-meta';
-    meta.textContent = `${stats(book).words} palavras · ${preview ? 'caderno de prévia' : 'privado'}`;
+    const others=book.sharing ? [{user_id:book.sharing.owner_id,display_name:book.sharing.owner_name},...(book.sharing.participants || [])].filter(person=>person.user_id!==session?.user.id).map(person=>person.display_name) : [];
+    meta.textContent = `${stats(book).words} palavras · ${preview ? 'caderno de prévia' : book.sharing ? (book.sharing.visibility === 'public' ? 'público' : 'privado') + (others.length ? ' · compartilhado com ' + others.join(', ') : '') : 'privado'}`;
     card.append(cover);
     const actions = document.createElement('div');
     actions.className = 'collection-actions';
@@ -520,6 +547,7 @@ function renderIndex() {
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = task.done;
+    checkbox.disabled=currentBook.sharing?.permission === 'reader';
     checkbox.setAttribute('aria-label', 'Concluir meta: ' + task.title);
     checkbox.addEventListener('change', () => { task.done = checkbox.checked; changed(); renderIndex(); });
     const text = document.createElement('input');
@@ -549,7 +577,11 @@ function renderPageIndex() {
     const number = document.createElement('span');
     number.textContent = String(index + 1).padStart(2, '0');
     const title = document.createElement('span');
-    title.textContent = page.title || 'Uma nova ideia';
+    if (page.title) title.textContent = page.title;
+    else {
+      renderStudyPreview(title, plainStudyText(page.content).trim().split('\n', 1)[0]);
+      title.textContent = title.textContent.trim() || 'Sem título';
+    }
     entry.append(number, title);
     $('page-list').append(entry);
   });
@@ -574,22 +606,27 @@ function renderPage() {
     }
     sheet.paper.querySelector('.paper-bottom').hidden = !sheet.page;
     sheet.paper.querySelector('.paper-top').hidden = !sheet.page;
+    sheet.visual.connect(sheet.page && currentBook.collaboration ? currentBook.collaboration.doc.getXmlFragment('text:'+sheet.page.id) : null, currentBook.collaboration?.awareness, session?.user);
     if (!sheet.page) return;
     const page = sheet.page;
     const position = currentBook.pages.indexOf(page);
-    for (const [id, value] of [['page-title', page.title], ['page-content', page.content]]) {
+    for (const [id, value] of [['page-title', page.title], ['page-content', page.content], ['page-date', page.date || '']]) {
       if (field(sheet, id).value !== value) field(sheet, id).value = value;
     }
+    field(sheet, 'page-date').toggleAttribute('data-empty', !page.date);
+    field(sheet, 'page-date').readOnly = reading;
+    field(sheet, 'page-date').setAttribute('aria-label', `Data da página ${position + 1}`);
     field(sheet, 'page-title').setAttribute('aria-label', `Título da página ${position + 1}`);
     field(sheet, 'page-content').setAttribute('aria-label', `Conteúdo Markdown da página ${position + 1}`);
+    field(sheet, 'page-visual').setAttribute('data-page-label', `Anotações da página ${position + 1}`);
     sheet.paper.style.setProperty('--font-size', page.font + 'px');
     sheet.paper.style.setProperty('--line-height', page.font * 1.75 + 'px');
     field(sheet, 'page-content').hidden = reading || !sourceMode;
     field(sheet, 'page-title').hidden = reading && !page.title;
     field(sheet, 'page-preview').hidden = !reading || !sourceMode;
     field(sheet, 'page-visual').hidden = sourceMode;
-    if (!sourceMode) sheet.visual.load(page.content, !reading);
-    if (reading && sourceMode) field(sheet, 'page-preview').innerHTML = markdown.render(page.content);
+    if (!sourceMode) sheet.visual.load(page.content, !reading && currentBook.sharing?.permission !== 'reader');
+    if (reading && sourceMode) renderStudyPreview(field(sheet, 'page-preview'), page.content);
     field(sheet, 'page-number').textContent = 'PÁGINA ' + String(position + 1).padStart(2, '0');
     field(sheet, 'page-position').textContent = String(position + 1).padStart(2, '0');
     field(sheet, 'line-count').textContent = `${countLines(page.content, page.size, page.font)} / ${pageCapacity(page.size, page.font).lines} linhas de referência`;
@@ -614,9 +651,19 @@ function renderPageControls() {
   $('previous-page').disabled = false;
   $('next-page').disabled = false;
   for (const sheet of sheets) sheet.paper.dataset.active = String(sheet.page === currentPage);
-  $('add-page').disabled = currentBook.pages.length >= 500;
-  $('undo-edit').disabled = !currentBook.visualError && !currentBook.editHistory?.undo.length;
-  $('redo-edit').disabled = !currentBook.editHistory?.redo.length;
+  const reader=currentBook.sharing?.permission === 'reader';
+  $('edit-mode').disabled=reader;
+  $('task-form').inert=reader;
+  $('history-button').disabled=reader || preview;
+  $('add-page').disabled = reader || currentBook.pages.length >= 500;
+  $('sharing-open').disabled=Boolean(currentBook.sharing && currentBook.sharing.permission !== 'owner');
+  if ($('edit-notebook')) $('edit-notebook').disabled=reader;
+  if (currentBook.collaboration) {
+    $('undo-edit').disabled=reader || !activeSheet().visual.editor.can().undo();
+    $('redo-edit').disabled=reader || !activeSheet().visual.editor.can().redo();
+  }
+  if (!currentBook.collaboration) $('undo-edit').disabled = !currentBook.visualError && !currentBook.editHistory?.undo.length;
+  if (!currentBook.collaboration) $('redo-edit').disabled = !currentBook.editHistory?.redo.length;
   $('draft-button').hidden = preview || !currentBook.draftChoices?.length;
   if (bookFace) showBookFace(bookFace);
 }
@@ -666,6 +713,7 @@ function openBook(book) {
   if (currentBook?.visualError) return;
   rememberPosition(true);
   currentBook = book;
+  if (book.collaboration) sharing.connect(book).catch(error=>notify(error.message));
   studyReminder.dismiss();
   $('page-search').value = '';
   applyAppearance();
@@ -700,7 +748,9 @@ function openBook(book) {
 }
 
 function newPage(content = '', size = 'medium', font = 16) {
-  return { id: crypto.randomUUID(), title: '', content, size, font };
+  const now = new Date();
+  const date = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+  return { id: crypto.randomUUID(), title: '', content, size, font, date };
 }
 
 function updateContent(sheet = activeSheet(), recordHistory = true, typing = true) {
@@ -708,6 +758,12 @@ function updateContent(sheet = activeSheet(), recordHistory = true, typing = tru
   if (!page) return;
   const content = field(sheet, 'page-content');
   const caret = content.selectionStart;
+  if (currentBook.collaboration) {
+    if (currentBook.sharing.permission === 'reader') {renderPage();return;}
+    page.title=field(sheet,'page-title').value;page.content=content.value;
+    sheet.visual.writeFragment(page.content,currentBook.collaboration.doc.getXmlFragment('text:'+page.id));
+    changed();fitWritingHeight([sheet]);renderIndex();return;
+  }
   if (recordHistory) rememberEdit(currentBook, page.id, Math.min(caret, page.content.length), typing);
   page.title = field(sheet, 'page-title').value;
   const ranges = [...styleRanges(content.value), ...(countLines(content.value, page.size, page.font) > pageCapacity(page.size, page.font).lines
@@ -743,13 +799,14 @@ function updateContent(sheet = activeSheet(), recordHistory = true, typing = tru
     field(sheet, 'word-count').textContent = `${countWords(page.content)} palavras`;
     fitWritingHeight([sheet]);
     renderPageControls();
-    if (reading && sourceMode) field(sheet, 'page-preview').innerHTML = markdown.render(page.content);
+    if (reading && sourceMode) renderStudyPreview(field(sheet, 'page-preview'), page.content);
   }
   changed();
 }
 
 function changed(book = currentBook) {
   if (preview) return;
+  if (book.collaboration) { sharing.changed(book);renderSaveState();renderCollectionSaveState();return; }
   book.generation += 1;
   book.lastEdit = Date.now();
   book.interactedAt = book.lastEdit;
@@ -767,17 +824,21 @@ function changed(book = currentBook) {
 function renderSaveState() {
   if (!currentBook) return;
   const book = currentBook;
-  $('save-state').textContent = book.visualError ? 'Edição visual pendente' : preview ? 'Prévia · sem salvamento' : book.conflict ? 'Conflito · rascunho preservado'
+  const state = book.collaboration ? book.collaborationStatus || (book.sharing?.permission === 'reader' ? 'Somente leitura' : 'Sincronizando…') : book.visualError ? 'Edição visual pendente' : preview ? 'Prévia · sem salvamento' : book.conflict ? 'Conflito · rascunho preservado'
     : book.error ? book.protectedGeneration === book.generation ? 'Erro de envio · protegido aqui' : 'Erro · alterações pendentes' : book.running ? 'Salvando…'
       : book.generation !== book.confirmed ? book.protectedGeneration === book.generation
         ? 'Protegido aqui · envio pendente' : 'Alterações pendentes' : 'Salvo';
+  if ($('save-state').textContent !== state) $('save-state').textContent = state;
   $('save-state').dataset.state = book.error || book.conflict || book.visualError ? 'error' : book.running ? 'saving' : 'saved';
   $('save-error').hidden = !(book.error || book.visualError);
-  $('save-error').querySelector('p').textContent = book.visualError ? book.visualError + ' A edição permanece nesta folha; copie o texto ou desfaça antes de sair.' : book.error?.message || '';
+  const error = book.visualError ? book.visualError + ' A edição permanece nesta folha; copie o texto ou desfaça antes de sair.' : book.error?.message || '';
+  const errorMessage = $('save-error').querySelector('p');
+  if (errorMessage.textContent !== error) errorMessage.textContent = error;
   $('resolve-conflict').hidden = !book.conflict;
   $('retry-save').hidden = Boolean(book.conflict || book.visualError);
   $('local-save-state').hidden = preview || !(book.localError || book.draftWarning);
-  $('local-save-state').textContent = book.localError ? 'Proteção local indisponível: ' + book.localError.message + ' Aguarde a confirmação do servidor antes de fechar.' : book.draftWarning?.message || '';
+  const localState = book.localError ? 'Proteção local indisponível: ' + book.localError.message + ' Aguarde a confirmação do servidor antes de fechar.' : book.draftWarning?.message || '';
+  if ($('local-save-state').textContent !== localState) $('local-save-state').textContent = localState;
 }
 
 async function persist(book) {
@@ -798,7 +859,7 @@ async function enterWorkspace() {
   for (const record of result.notebooks) {
     const book = await loadBook(record, session.user, session.keyset, rootKey);
     try {
-      const drafts = await readDrafts(book, draftStore, error => { book.draftWarning = error; });
+      const drafts = record.is_shared ? [] : await readDrafts(book, draftStore, error => { book.draftWarning = error; });
       if (drafts.length === 1) { recoverDraft(book, drafts[0]); notify('Seu rascunho protegido foi recuperado.'); }
       else if (drafts.length) book.draftChoices = drafts;
     } catch (error) { book.localError = error; }
@@ -813,6 +874,7 @@ async function enterWorkspace() {
     }
   } catch (error) { notify('Não foi possível carregar seu padrão local: ' + error.message); }
   books.splice(0, books.length, ...loaded);
+  await sharing.load();
   $('profile-name').textContent = session.user.display_name;
   $('avatar').textContent = session.user.display_name.slice(0, 2).toUpperCase();
   $('auth-view').hidden = true;
@@ -826,17 +888,29 @@ async function enterWorkspace() {
 }
 
 async function logout() {
+  if (creatingBook) throw new Error('Há um caderno com criação pendente. Abra Novo caderno e tente novamente antes de sair.');
   if (currentBook?.visualError) throw new Error('Há uma edição visual pendente; copie o texto ou desfaça antes de sair.');
-  if (!preview) {
-    for (const book of books) {
-      while (book.generation !== book.confirmed || book.batch) await saveBook(book, api, () => protectDraft(book));
-      await clearDraft(book);
+  if (!social.prepareLogout()) return;
+  $('workspace').inert = true;
+  try {
+    if (!preview) {
+      await sharing.flushAll();
+      for (const book of books) {
+        if (book.collaboration) continue;
+        while (book.generation !== book.confirmed || book.batch) await saveBook(book, api, () => protectDraft(book));
+        await clearDraft(book);
+      }
+      await api('/api/logout', {});
     }
-    await api('/api/logout', {});
-  }
-  rootKey = null;
-  books.length = 0;
-  location.href = '/';
+    social.completeLogout();
+    sharing.destroy();
+    rootKey = null;
+    books.length = 0;
+    location.href = '/';
+  } catch (error) {
+    social.cancelLogout();
+    throw error;
+  } finally { $('workspace').inert = false; }
 }
 
 $('today').textContent = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long' }).format(new Date());
@@ -844,6 +918,8 @@ $('auth-toggle').addEventListener('click', () => {
   signingUp = !signingUp;
   $('name-field').hidden = !signingUp;
   $('name-field').querySelector('input').required = signingUp;
+  $('age-attestation').hidden = !signingUp;
+  $('age-attestation').disabled = !signingUp;
   $('content-password-fields').hidden = !signingUp;
   $('content-password-fields').disabled = !signingUp;
   $('auth-form').elements.password.autocomplete = signingUp ? 'new-password' : 'current-password';
@@ -854,14 +930,19 @@ $('auth-toggle').addEventListener('click', () => {
 });
 $('auth-form').addEventListener('submit', async event => {
   event.preventDefault();
+  if (event.target.inert) return;
+  const resumeForm = pauseForm(event.target);
+  let failed = false;
   $('auth-error').textContent = '';
   $('auth-submit').disabled = true;
   $('auth-toggle').disabled = true;
+  $('recovery-open').disabled = true;
   $('auth-form').setAttribute('aria-busy', 'true');
   $('auth-submit').textContent = signingUp ? 'Criando sua biblioteca…' : 'Entrando…';
   try {
     const data = new FormData(event.target);
     const body = { email: data.get('email'), password: data.get('password') };
+    if (signingUp) body.adultConfirmed = data.get('adult-confirmed') === 'on';
     if (signingUp) {
       const password = $('signup-content-password').value;
       if (password !== $('signup-content-confirmation').value) throw new Error('A confirmação da senha de conteúdo não confere.');
@@ -880,61 +961,82 @@ $('auth-form').addEventListener('submit', async event => {
       event.target.reset();
       $('unlock-dialog').showModal();
     }
-  } catch (error) { $('auth-error').textContent = error.message; }
+  } catch (error) { failed = true; $('auth-error').textContent = error.message; }
   finally {
     $('auth-submit').disabled = false; $('auth-toggle').disabled = false;
+    $('recovery-open').disabled = false;
     $('auth-form').setAttribute('aria-busy', 'false');
     $('auth-submit').textContent = signingUp ? 'Criar minha conta' : 'Entrar';
+    resumeForm(failed);
   }
 });
 function notebookDialog(book) {
+  if ($('notebook-form').inert) return;
   editingBook = book;
   const form = $('notebook-form');
   form.reset();
-  $('notebook-form-error').textContent = '';
+  $('notebook-form-error').textContent = !book && creatingBook
+    ? 'Uma criação anterior aguarda confirmação. Envie novamente para retomar o mesmo caderno.' : '';
+  const values = book || creatingBook;
   $('notebook-dialog').querySelector('h2').textContent = book ? 'Editar caderno' : 'Novo caderno';
   form.querySelector('[type=submit]').textContent = book ? 'Guardar alterações' : 'Criar caderno';
-  if (book) for (const field of ['title', 'subject', 'tags']) {
-    form.elements[field].value = field === 'tags' ? book.tags.join(', ') : book[field];
+  if (values) for (const field of ['title', 'subject', 'tags']) {
+    form.elements[field].value = field === 'tags' ? values.tags.join(', ') : values[field];
   }
-  form.elements.shelves.value = book ? organization(book.organization).shelves.join(', ')
+  form.elements.shelves.value = values ? organization(values.organization).shelves.join(', ')
     : collectionShelves(books).find(shelf => 'shelf:' + shelf.key === $('collection-filter').value)?.name || '';
-  form.elements.favorite.checked = organization(book?.organization).favorite;
+  form.elements.favorite.checked = organization(values?.organization).favorite;
   $('initial-size-field').hidden = Boolean(book);
-  form.elements.size.value = personalDefaults.size;
+  form.elements.size.value = creatingBook && !book ? creatingBook.pages[0].size : personalDefaults.size;
   $('notebook-dialog').showModal();
 }
 for (const id of ['new-notebook', 'first-notebook']) $(id).addEventListener('click', () => notebookDialog(null));
 for (const element of document.querySelectorAll('[data-close]')) element.addEventListener('click', () => $(element.dataset.close).close());
+$('notebook-dialog').addEventListener('cancel', event => {
+  if ($('notebook-form').inert) event.preventDefault();
+});
 $('notebook-form').addEventListener('submit', async event => {
   event.preventDefault();
+  if (event.target.inert) return;
   const data = new FormData(event.target);
   const meta = {
     title: data.get('title').trim(), subject: data.get('subject').trim(),
     tags: data.get('tags').split(',').map(tag => tag.trim()).filter(Boolean),
   };
   if (!meta.title) { $('notebook-form-error').textContent = 'Informe o nome do caderno.'; return; }
+  const resumeForm = pauseForm(event.target);
+  let failed = false;
+  $('notebook-form-error').textContent = '';
   const submit = event.target.querySelector('[type=submit]');
   submit.disabled = true;
+  submit.textContent = editingBook ? 'Guardando alterações…' : 'Criando caderno…';
+  $('notebook-dialog').setAttribute('aria-busy', 'true');
   try {
     meta.organization = organization({ shelves: data.get('shelves').split(',').map(name => name.trim()).filter(Boolean),
       favorite: data.get('favorite') === 'on' });
     const size = data.get('size');
     if (!editingBook) pageCapacity(size, personalDefaults.font);
-    const book = editingBook || { id: crypto.randomUUID(), preferences: { ...personalDefaults.preferences },
-      pages: [newPage('', size, personalDefaults.font)], tasks: [] };
+    const book = editingBook || (creatingBook ||= { id: crypto.randomUUID(), preferences: { ...personalDefaults.preferences },
+      pages: [newPage('', size, personalDefaults.font)], tasks: [] });
     Object.assign(book, meta);
+    if (!editingBook) book.pages[0].size = size;
     if (editingBook) changed(book);
     else {
       if (!preview) await createBook(book, session.user, session.keyset, rootKey);
       books.push(book);
+      creatingBook = null;
     }
     $('notebook-dialog').close();
     event.target.reset();
     renderCollection();
     openBook(book);
-  } catch (error) { $('notebook-form-error').textContent = error.message; }
-  finally { submit.disabled = false; }
+  } catch (error) { failed = true; $('notebook-form-error').textContent = error.message; }
+  finally {
+    $('notebook-dialog').setAttribute('aria-busy', 'false');
+    submit.disabled = false;
+    submit.textContent = editingBook ? 'Guardar alterações' : 'Criar caderno';
+    resumeForm(failed);
+  }
 });
 $('back-library').addEventListener('click', () => { renderCollection(); showView('library'); });
 $('collection-search').addEventListener('input', renderCollection);
@@ -944,6 +1046,7 @@ $('clear-collection').addEventListener('click', () => {
 });
 $('add-page').addEventListener('click', () => {
   if (currentBook.visualError) { notify('Resolva a edição visual pendente antes de criar outra folha.'); return; }
+  if (currentBook.sharing?.permission === 'reader') return;
   if (currentBook.pages.length >= 500) { notify('Limite local: 500 páginas por caderno. Abra outro caderno.'); return; }
   const page = newPage('', currentPage.size, currentPage.font);
   rememberEdit(currentBook, currentPage.id, field(activeSheet(), 'page-content').selectionStart);
@@ -973,11 +1076,23 @@ for (const sheet of sheets) {
   field(sheet, 'page-visual').addEventListener('compositionend', () => {
     composingSheet = null; queueMicrotask(() => { updateContent(sheet); renderLayout(); });
   });
+  field(sheet, 'page-date').addEventListener('input', event => {
+    event.currentTarget.toggleAttribute('data-empty', !event.currentTarget.value);
+  });
+  field(sheet, 'page-date').addEventListener('change', () => {
+    if (reading || !sheet.page) return;
+    try {
+      const date = pageDate(field(sheet, 'page-date').value);
+      rememberEdit(currentBook, sheet.page.id, field(sheet, 'page-content').selectionStart);
+      sheet.page.date = date;
+      changed(); renderPageControls();
+    } catch (error) { field(sheet, 'page-date').value = sheet.page.date || ''; notify(error.message); }
+  });
   field(sheet, 'page-title').addEventListener('input', () => {
     stopNotebookMotion();
     rememberEdit(currentBook, sheet.page.id, field(sheet, 'page-title').selectionStart, true);
     sheet.page.title = field(sheet, 'page-title').value;
-    changed(); renderIndex();
+    changed(); renderIndex(); renderPageControls();
   });
   for (const id of ['page-content', 'page-title', 'page-visual']) field(sheet, id).addEventListener('keydown', stopNotebookMotion);
 }
@@ -1020,7 +1135,7 @@ function navigateBook(direction, drag) {
     selectPage(face === 'front' ? currentBook.pages[0] : currentBook.pages.at(-1));
     if (face === 'back' && currentBook.pages.length % 2) { blankVerso = true; renderPage(); }
     closeNotebookHud();
-    turnPaper(sheets[direction < 0 ? 0 : 1].paper, direction, $('motion-mode').value, window.matchMedia('(prefers-reduced-motion: reduce)').matches, outgoing, drag?.progress || 0, () => frameNotebook('page'));
+    turnPaper(sheets[direction < 0 ? 0 : 1].paper, direction, $('motion-mode').value, window.matchMedia('(prefers-reduced-motion: reduce)').matches, outgoing, drag?.progress || 0, () => frameNotebook('page', true));
     return;
   }
   if (blankVerso && direction < 0) { selectPage(currentBook.pages.at(-1), true, true, { ...drag, direction: -1 }); return; }
@@ -1052,7 +1167,8 @@ function navigateBook(direction, drag) {
        if (outgoing) { closeNotebookHud(); spread.hidden = false; spread.classList.add('closing-book'); coverStage.style.visibility = 'hidden'; source.style.visibility = 'hidden'; }
        turnPaper(source, direction, $('motion-mode').value, reduced, outgoing, drag?.progress || 0, () => {
          spread.hidden = Boolean(bookFace); spread.classList.remove('closing-book'); coverStage.style.visibility = ''; source.style.visibility = '';
-         if (bookFace && !reading) { closeNotebookHud(); $('notebook-hud').open = true; }
+          if (bookFace) frameNotebook('whole', true);
+         if (bookFace && !reading && window.innerWidth > 720) { closeNotebookHud(); $('notebook-hud').open = true; }
        });
     }
 }
@@ -1071,13 +1187,15 @@ function pageSurface(sheet, page, blank = false) {
     if (page) {
       const part = id => copy.querySelector('[id="' + id + sheet.suffix + '"]');
       const position = currentBook.pages.indexOf(page) + 1;
+      part('page-date').value = page.date || '';
+      part('page-date').toggleAttribute('data-empty', !page.date);
       part('page-title').value = page.title;
       part('page-title').hidden = reading && !page.title;
       part('page-content').value = page.content;
       const visual = part('page-visual');
       if (page !== sheet.page) visual.replaceChildren(sheet.visual.surface(page.content));
       visual.hidden = sourceMode; part('page-content').hidden = reading || !sourceMode; part('page-preview').hidden = !reading || !sourceMode;
-      part('page-preview').innerHTML = markdown.render(page.content);
+      renderStudyPreview(part('page-preview'), page.content);
       part('page-number').textContent = 'PÁGINA ' + String(position).padStart(2, '0');
       part('page-position').textContent = String(position).padStart(2, '0');
       part('line-count').textContent = `${countLines(page.content, page.size, page.font)} / ${pageCapacity(page.size, page.font).lines} linhas de referência`;
@@ -1118,7 +1236,7 @@ function previewPageTurn(direction, outgoing) {
   }
   const sheet = sheets[direction < 0 ? 0 : 1];
   const backOpening = bookFace === 'back' && currentBook.pages.length % 2;
-  const copy = pageSurface(sheet, backOpening ? null : bookOpening(currentBook.pages, target)[direction < 0 ? 0 : 1], backOpening);
+  const copy = pageSurface(sheet, bookFace || backOpening ? null : bookOpening(currentBook.pages, target)[direction < 0 ? 0 : 1], backOpening);
   if (bookFace) { copy.style.left = coverFace.offsetLeft + 'px'; coverStage.append(copy); }
   else sheet.paper.parentElement.append(copy);
   return () => copy.remove();
@@ -1164,9 +1282,9 @@ $('page-top').addEventListener('click', () => {
 });
 function setReading(nextReading) {
   stopNotebookMotion();
-  reading = nextReading;
+  reading = nextReading || currentBook?.sharing?.permission === 'reader';
   coverEditor.render();
-  if (bookFace && !reading) { closeNotebookHud(); $('notebook-hud').open = true; }
+  if (bookFace && !reading && window.innerWidth > 720) { closeNotebookHud(); $('notebook-hud').open = true; }
   if (currentBook?.preferences) currentBook.preferences.reading = reading;
   if (currentPage && currentBook.pages.includes(currentPage)) renderPage();
   for (const [buttonId, selected] of [['edit-mode', !reading], ['preview-mode', reading]]) {
@@ -1223,21 +1341,24 @@ $('save-defaults').addEventListener('click', async () => {
   } catch (error) { notify('Padrão aplicado nesta aba, mas não foi gravado: ' + error.message); }
 });
 $('notebook-zoom').addEventListener('input', () => {
+  const target = bookFace ? coverFace : spread;
+  const before = target.getBoundingClientRect();
   notebookFrameMode = null;
   currentBook.preferences.zoom = setZoom(Number($('notebook-zoom').value) / 100);
   document.body.style.setProperty('--book-zoom', currentBook.preferences.zoom);
   fitWritingHeight();
   $('zoom-value').textContent = $('notebook-zoom').value + '%'; changed();
+  animateNotebookCamera(viewport, before, target.getBoundingClientRect(), currentBook.preferences.motion, window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 });
 $('center-notebook').addEventListener('click', () => {
-  closeNotebookHud(); centerNotebook();
+  closeNotebookHud(); centerNotebook(true);
 });
 const fitNotebook = button('Ajustar largura', 'text-button', () => {
-  closeNotebookHud(); frameNotebook('page'); changed();
+  closeNotebookHud(); frameNotebook('page', true); changed();
 });
 $('center-notebook').after(fitNotebook);
 fitNotebook.after(button('Ver inteiro', 'text-button', () => {
-  closeNotebookHud(); frameNotebook('whole'); changed();
+  closeNotebookHud(); frameNotebook('whole', true); changed();
 }));
 $('focus-writing').addEventListener('click', () => {
   setNotebookPan(false);
@@ -1279,6 +1400,7 @@ for (const sheet of sheets) for (const name of ['input', 'keyup', 'select']) fie
   });
 });
 function undoEdit(redo = false) {
+  if (currentBook.collaboration) {if(currentBook.sharing.permission !== 'reader') activeSheet().visual.editor.commands[redo?'redo':'undo']();return;}
   if (currentBook.visualError) {
     currentBook.visualError = null; activeSheet().visual.reload(); renderPage(); renderSaveState(); focusContent(); return;
   }
@@ -1504,14 +1626,28 @@ $('task-form').addEventListener('submit', event => {
   renderIndex();
 });
 $('history-button').disabled = preview;
+function viewingHistoryPage(book, page) {
+  return currentBook === book && currentPage === page && !bookFace && !blankVerso
+    && !$('notebook-view').hidden && !book.visualError;
+}
 $('history-button').addEventListener('click', async () => {
   const book = currentBook;
   const page = currentPage;
+  if (book.collaboration) {try {await sharing.history(book);} catch(error) {notify(error.message);}return;}
+  if (!viewingHistoryPage(book, page)) return;
   $('history-button').disabled = true;
+  $('history-button').textContent = 'Carregando…';
   try {
-    await saveBook(book, api, () => protectDraft(book));
-    const rows = await versions(book, page);
+    let rows, generation;
+    do {
+      await saveBook(book, api, () => protectDraft(book));
+      if (!viewingHistoryPage(book, page)) return;
+      generation = book.generation;
+      rows = await versions(book, page);
+      if (!viewingHistoryPage(book, page)) return;
+    } while (book.generation !== generation || book.generation !== book.confirmed || book.batch);
     historySelection = null;
+    $('history-heading').textContent = 'Versões da página ' + (book.pages.indexOf(page) + 1);
     $('history-preview').hidden = true;
     $('restore-version').disabled = true;
     $('history-list').replaceChildren(...rows.map(row => button(
@@ -1523,12 +1659,17 @@ $('history-button').addEventListener('click', async () => {
       })));
     $('history-dialog').showModal();
   } catch (error) { notify(error.message); }
-  finally { $('history-button').disabled = false; renderSaveState(); }
+  finally { $('history-button').disabled = false; $('history-button').textContent = 'Versões'; renderSaveState(); }
 });
 $('restore-version').addEventListener('click', () => {
   if (!historySelection) return;
   const { book, page, value } = historySelection;
-  Object.assign(page, value);
+  if (!viewingHistoryPage(book, page)) {
+    $('history-dialog').close();
+    notify('A página mudou. Abra suas versões novamente.');
+    return;
+  }
+  Object.assign(page, value, { date: value.date || '' });
   changed(book);
   $('history-dialog').close();
   openBook(book);
@@ -1540,24 +1681,27 @@ $('retry-save').addEventListener('click', () => { currentBook.retryAt = 0; persi
 $('resolve-conflict').textContent = 'Preservar meu rascunho em outro caderno';
 $('resolve-conflict').addEventListener('click', async () => {
   const original = currentBook;
-  const copy = { id: crypto.randomUUID(), title: original.title.slice(0, 63) + ' (rascunho)',
-    subject: original.subject, tags: [...original.tags],
-    preferences: { ...original.preferences },
-    covers: coverDesigns(original.covers),
-    organization: organization(original.organization),
-    pages: original.pages.map(page => ({ ...pageData(page), id: crypto.randomUUID() })),
-    tasks: original.tasks.map(task => ({ id: crypto.randomUUID(), title: task.title, done: task.done })) };
+  const copy = original.conflictCopy ||= { id: crypto.randomUUID(), pages: [], tasks: [] };
+  Object.assign(copy, metadata(original), { title: original.title.slice(0, 63) + ' (rascunho)' });
+  copy.pages = original.pages.map((page, index) => ({
+    id: crypto.randomUUID(), ...copy.pages[index], ...pageData(page),
+  }));
+  copy.tasks = original.tasks.map((task, index) => ({
+    id: crypto.randomUUID(), ...copy.tasks[index], title: task.title, done: task.done,
+  }));
+  if (copy.revision) copy.generation++;
   $('resolve-conflict').disabled = true;
   $('notebook-view').inert = true;
   try {
     await createBook(copy, session.user, session.keyset, rootKey);
-    await saveBook(copy);
+    while (copy.generation !== copy.confirmed || copy.batch) await saveBook(copy);
     const latest = await loadBook({ id: original.id, wrapped_key: (await api('/api/notebooks')).notebooks.find(book => book.id === original.id).wrapped_key }, session.user, session.keyset, rootKey);
     latest.draftChoices = original.draftChoices;
     latest.draftWarning = original.draftWarning;
     original.confirmed = original.generation; original.batch = null;
     await clearDraft(original);
     books.splice(books.indexOf(original), 1, latest, copy);
+    delete original.conflictCopy;
     renderCollection();
     openBook(copy);
     notify('Rascunho salvo em um novo caderno. A versão da outra sessão foi preservada.');
@@ -1565,6 +1709,7 @@ $('resolve-conflict').addEventListener('click', async () => {
   finally { $('resolve-conflict').disabled = false; $('notebook-view').inert = false; }
 });
 const editBook = button('Editar caderno', 'text-button', () => notebookDialog(currentBook));
+editBook.id='edit-notebook';
 $('hud-actions').append(editBook);
 const focusBook = button('Modo foco', 'text-button focus-button', () => {
   setNotebookFocus(!document.body.classList.contains('notebook-focus'));
@@ -1591,16 +1736,28 @@ window.addEventListener('keydown', event => {
 $('unlock-dialog').addEventListener('cancel', event => event.preventDefault());
 $('unlock-form').addEventListener('submit', async event => {
   event.preventDefault();
+  if (event.target.inert) return;
   const submit = event.target.querySelector('[type=submit]');
+  const resumeForm = pauseForm(event.target);
+  let failed = false;
+  $('unlock-dialog').setAttribute('aria-busy', 'true');
+  $('unlock-logout').disabled = true;
   submit.disabled = true;
+  submit.textContent = 'Desbloqueando…';
   $('unlock-error').textContent = '';
   try {
     const password = new FormData(event.target).get('contentPassword');
     rootKey = await unlockRoot(password, session.keyset.root_envelope, session.user.id, session.keyset.id);
     event.target.reset();
     await enterWorkspace();
-  } catch (error) { rootKey = null; $('unlock-error').textContent = error.message; }
-  finally { submit.disabled = false; }
+  } catch (error) { failed = true; rootKey = null; $('unlock-error').textContent = error.message; }
+  finally {
+    $('unlock-dialog').setAttribute('aria-busy', 'false');
+    $('unlock-logout').disabled = false;
+    submit.disabled = false;
+    submit.textContent = 'Desbloquear';
+    resumeForm(failed);
+  }
 });
 for (const id of ['logout', 'unlock-logout']) $(id).addEventListener('click', async () => {
   $(id).disabled = true;
@@ -1608,7 +1765,7 @@ for (const id of ['logout', 'unlock-logout']) $(id).addEventListener('click', as
   finally { $(id).disabled = false; }
 });
 window.addEventListener('beforeunload', event => {
-  if (books.some(book => book.visualError) || (!preview && books.some(book => book.generation !== book.confirmed || book.batch || book.running))) {
+  if (creatingBook || books.some(book => book.visualError) || (!preview && books.some(book => book.generation !== book.confirmed || book.batch || book.running))) {
     event.preventDefault(); event.returnValue = '';
   }
 });
@@ -1616,8 +1773,8 @@ setInterval(() => {
   if (preview) return;
   const now = Date.now();
   for (const book of books) {
-    if (book.generation !== book.confirmed && book.protectedGeneration !== book.generation && !book.draftRunning) protectDraft(book);
-    if (book.running || book.conflict || now < (book.retryAt || 0)) continue;
+    if (!book.collaboration && book.generation !== book.confirmed && book.protectedGeneration !== book.generation && !book.draftRunning) protectDraft(book);
+    if (book.collaboration || book.running || book.conflict || now < (book.retryAt || 0)) continue;
     if ((book.generation !== book.confirmed || book.batch)
       && (now - (book.lastEdit || 0) >= 900 || now - (book.firstEdit || 0) >= 5000)) persist(book);
   }
@@ -1627,7 +1784,51 @@ previewLink.href = '/?preview=1';
 previewLink.className = 'text-button preview-link';
 previewLink.textContent = 'Conhecer o caderno sem criar conta';
 $('auth-form').after(previewLink);
-if (preview) {
+async function settleBook(book) {
+  if (preview) return;
+  if (book.collaboration) { await sharing.flush(book);return; }
+  while (book.generation !== book.confirmed || book.batch) await saveBook(book, api, () => protectDraft(book));
+}
+async function storeNewBook(book) {
+  if (!preview) await createBook(book,session.user,session.keyset,rootKey);
+  if (!books.includes(book)) books.push(book);
+  await settleBook(book);renderCollection();
+}
+const sharing = setupSharing({
+  books:()=>books,session:()=>session,rootKey:()=>rootKey,current:()=>currentBook,
+  initialize:(page,fragment)=>sheets[0].visual.writeFragment(page.content,fragment),
+  serialize:fragment=>sheets[0].visual.serializeFragment(fragment),
+  onModel(book,content=true) {
+    if (book !== currentBook) { if (!$('library-view').hidden) renderCollection();return; }
+    renderSaveState();
+    if (!content || $('notebook-view').hidden) return;
+    cancelAnimationFrame(book.sharedFrame);
+    book.sharedFrame=requestAnimationFrame(()=>{
+      if (book!==currentBook) return;
+      currentPage=book.pages.find(page=>page.id===currentPage?.id) || book.pages[0];
+      $('notebook-title').textContent=book.title;
+      renderPage();renderIndex();coverEditor.render();
+    });
+  },
+  show:book=>{renderCollection();openBook(book);},refresh:renderCollection,notify,settle:settleBook,store:storeNewBook,
+});
+setupNotebookFiles({
+  books: () => books, current: () => currentBook, preview, changed, notify,
+  split: text => {
+    const plan = planPageEdit(text, 'medium', 16, 1, protectedBlocks(text, markdown.parse(text, {})));
+    if (plan.limited) throw new Error('O arquivo ultrapassa o limite de 500 páginas.');
+    return plan.chunks;
+  },
+  settle:settleBook,
+  applyPages(book,pages) {
+    if (book.collaboration) book.collaboration.doc.transact(()=>{for(const page of pages) sheets[0].visual.writeFragment(page.content,book.collaboration.doc.getXmlFragment('text:'+page.id));});
+    book.pages=pages;
+  },
+  store:storeNewBook,
+  show(book) { renderCollection(); openBook(book); },
+});
+const resettingPassword = setupPasswordReset({ api });
+if (preview && !resettingPassword) {
   const previewLabel = document.createElement('div');
   previewLabel.className = 'preview-label';
   previewLabel.textContent = 'PRÉVIA VISUAL · SEM SALVAMENTO';
@@ -1641,7 +1842,7 @@ if (preview) {
       newPage('# Entre uma ideia e outra\n\nConhecimento também é perceber o que mudou no meu jeito de pensar.\n\n{{serif;blue;20|Uma página de cada vez.}}\n\n## Minha próxima pergunta\n\nComo posso usar o que aprendi em algo pequeno, hoje?\n\n- Anotar uma conexão.\n- Testar um exemplo.\n- Guardar uma dúvida para amanhã.\n\n## Um espaço para continuar\n\nEste caderno acompanha o meu ritmo. A folha segue abaixo da tela; há lugar para o que ainda vou descobrir.')] });
   renderCollection();
   openBook(books[0]);
-} else {
+} else if (!resettingPassword) {
   api('/api/me').then(value => {
     session = value;
     $('unlock-dialog').showModal();

@@ -1,10 +1,17 @@
-const stylePattern = /\{\{(sans|serif|mono|hand);(ink|rust|blue|plum|#[a-fA-F0-9]{6});(14|16|18|20|24)\|([^\n{}]+)\}\}/g;
-const visualStylePattern = /\{\{l4;(sans|serif|mono|hand);(ink|rust|blue|plum|#[a-fA-F0-9]{6});(14|16|18|20|24)\}\}([\s\S]*?)\{\{\/l4\}\}/g;
+const stylePattern = /\{\{(sans|serif|mono|hand|book|humanist|typewriter);(ink|rust|blue|plum|#[a-fA-F0-9]{6});(14|16|18|20|24)\|([^\n{}]+)\}\}/g;
+const visualStylePattern = /\{\{l4;(sans|serif|mono|hand|book|humanist|typewriter);(ink|rust|blue|plum|#[a-fA-F0-9]{6});(14|16|18|20|24)\}\}([\s\S]*?)\{\{\/l4\}\}/g;
 const styleStart = new RegExp('^' + stylePattern.source);
 const styleWhole = new RegExp('^' + stylePattern.source + '$');
 
 export const INKS = { ink: '#38291f', rust: '#823d25', blue: '#294f73', plum: '#674061' };
 export const validInk = value => Object.hasOwn(INKS, value) || /^#[a-fA-F0-9]{6}$/.test(value);
+
+export function applyStudyColors(root) {
+  for (const element of root.querySelectorAll('[data-study-ink]')) {
+    const ink = element.getAttribute('data-study-ink');
+    if (ink?.startsWith('#') && validInk(ink) && element.style.getPropertyValue('--study-ink') !== ink) element.style.setProperty('--study-ink', ink);
+  }
+}
 
 export function rgbInk(red, green, blue) {
   const values = [red, green, blue];
@@ -52,7 +59,7 @@ export function installStudyStyles(markdown) {
     const depth = env.studyDepth || 0;
     const content = token.meta.rich && depth < 8 ? markdown.renderInline(token.content, { ...env, studyDepth: depth + 1 }) : markdown.utils.escapeHtml(token.content);
     const ink = token.meta.ink;
-    const color = ink.startsWith('#') ? ` data-study-ink="${ink}" style="color:${ink}"` : '';
+    const color = ink.startsWith('#') ? ` data-study-ink="${ink}"` : '';
     return `<span class="study-font-${token.meta.font} study-ink-${ink.startsWith('#') ? 'custom' : ink} study-size-${token.meta.size}"${color}>${content}</span>`;
   };
   return markdown;

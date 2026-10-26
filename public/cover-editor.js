@@ -1,3 +1,4 @@
+import { COVER_COLORS } from './notebook-preferences.js';
 import { coverDesigns, coverText, imageBounds, resizeImage, prepareCoverImage } from './cover-design.js';
 
 export function decorateCover(face, book, side) {
@@ -7,7 +8,7 @@ export function decorateCover(face, book, side) {
   face.dataset.material = design.material || book.preferences.finish;
   face.dataset.texture = design.texture || 'natural';
   face.style.setProperty('--cover', design.color || book.preferences.coverColor
-    || { walnut: '#50392d', clay: '#7e4839', slate: '#3d4e57' }[book.preferences.cover]);
+    || COVER_COLORS[book.preferences.cover]);
   face.querySelector('.cover-label').textContent = side === 'front' ? 'LIBR4RY / SEU CADERNO' : 'LIBR4RY';
   face.querySelector('h2').textContent = text.title;
   face.querySelector('p').textContent = text.subject;
@@ -62,7 +63,7 @@ export function createCoverEditor({ face, title, subject, getState, changed, not
     panel.querySelector('[data-cover="material"]').value = value.material || book.preferences.finish;
     panel.querySelector('[data-cover="texture"]').value = value.texture || 'natural';
     panel.querySelector('[data-cover="color"]').value = value.color || book.preferences.coverColor
-      || { walnut: '#50392d', clay: '#7e4839', slate: '#3d4e57' }[book.preferences.cover];
+      || COVER_COLORS[book.preferences.cover];
     panel.querySelector('[data-image="choose"]').textContent = value.image ? 'Substituir imagem' : 'Adicionar imagem';
     panel.querySelector('.cover-image-actions').hidden = !value.image;
   }

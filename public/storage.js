@@ -4,15 +4,33 @@ import { preferences } from './notebook-preferences.js';
 import { organization } from './collection.js';
 import { coverDesigns } from './cover-design.js';
 
+const rateLimitMessage = 'Muitas tentativas. Aguarde um minuto e tente novamente.';
+
 export async function api(path, body) {
-  const response = await fetch(path, {
+  const options = {
     method: body === undefined ? 'GET' : 'POST', credentials: 'same-origin',
     headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(10000),
-  });
-  const result = await response.json();
-  if (!response.ok) {
-    const error = new Error(result.error || 'Não foi possível concluir a operação.');
+  };
+  let response;
+  let result;
+  try {
+    response = await fetch(path, options);
+    result = await response.json();
+  } catch (cause) {
+    let message = 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.';
+    if (response) message = response.status === 429 ? rateLimitMessage : 'O servidor retornou uma resposta inválida ou incompleta. Tente novamente.';
+    if (cause.name === 'TimeoutError' || options.signal.reason?.name === 'TimeoutError') {
+      message = 'O servidor demorou para responder. Não foi possível confirmar a operação. Tente novamente.';
+    }
+    const error = new Error(message, { cause });
+    if (response) error.status = response.status;
+    throw error;
+  }
+  if (!response.ok || !result || typeof result !== 'object' || Array.isArray(result)) {
+    let message = response.status === 429 ? rateLimitMessage : 'Não foi possível concluir a operação. O servidor retornou uma resposta inválida.';
+    if (!response.ok && typeof result?.error === 'string' && result.error.trim()) message = result.error;
+    const error = new Error(message);
     error.status = response.status;
     throw error;
   }
@@ -23,8 +41,18 @@ export function context(book, kind, id = book.id, revision = '') {
   return `${kind}:${book.ownerId}:${book.id}:${id}:${revision}`;
 }
 
+export function pageDate(value = '') {
+  if (value === '') return '';
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)
+    || value.startsWith('0000') || !Number.isFinite(Date.parse(value + 'T00:00:00Z'))
+    || new Date(value + 'T00:00:00Z').toISOString().slice(0, 10) !== value) {
+    throw new Error('Data da página inválida.');
+  }
+  return value;
+}
 export function pageData(page) {
-  return { title: page.title, content: page.content, size: page.size, font: page.font };
+  return { title: page.title, content: page.content, size: page.size, font: page.font,
+    ...(page.date ? { date: pageDate(page.date) } : {}) };
 }
 
 function taskData(task) {
@@ -42,29 +70,36 @@ function validatePage(page) {
     throw new Error('Dados da página inválidos.');
   }
   pageCapacity(page.size, page.font);
+  pageDate(page.date);
   return page;
 }
 
 export async function createBook(book, user, keyset, rootKey, request = api) {
+  if (book.revision) return book;
   book.ownerId = user.id;
   book.keysetId = keyset.id;
-  const secret = makeSecret();
-  book.key = await importKey(secret);
-  const wrappedKey = await seal(rootKey, toBase64(secret), context(book, 'key', keyset.id));
-  secret.fill(0);
   const first = book.pages[0];
-  await request('/api/notebooks', {
-    id: book.id, keysetId: keyset.id, wrappedKey,
-    metadata: await seal(book.key, metadata(book), context(book, 'metadata', book.id, 1)),
-    page: { id: first.id, envelope: await seal(book.key, pageData(first), context(book, 'page', first.id, 1)) },
-  });
+  if (!book.creation) {
+    const secret = makeSecret();
+    book.key = await importKey(secret);
+    const wrappedKey = await seal(rootKey, toBase64(secret), context(book, 'key', keyset.id));
+    secret.fill(0);
+    const meta = metadata(book);
+    const page = pageData(first);
+    book.creation = { metadata: JSON.stringify(meta), page: JSON.stringify(page), body: {
+      id: book.id, keysetId: keyset.id, wrappedKey,
+      metadata: await seal(book.key, meta, context(book, 'metadata', book.id, 1)),
+      page: { id: first.id, envelope: await seal(book.key, page, context(book, 'page', first.id, 1)) },
+    } };
+  }
+  await request('/api/notebooks', book.creation.body);
   book.revision = 1;
-  book.generation = 0;
   book.confirmed = 0;
   first.revision = 1;
-  first.saved = JSON.stringify(pageData(first));
-  // ponytail: criação inicia uma página; cópias completas usam o mesmo salvamento atômico depois.
-  if (book.pages.length > 1 || book.tasks.length) book.generation = 1;
+  first.saved = book.creation.page;
+  book.generation = Number(book.pages.length > 1 || book.tasks.length > 0
+    || JSON.stringify(metadata(book)) !== book.creation.metadata || JSON.stringify(pageData(first)) !== first.saved);
+  delete book.creation;
   return book;
 }
 

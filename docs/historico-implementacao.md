@@ -4,6 +4,186 @@ Registro preservado do README anterior. As entradas descrevem entregas em moment
 
 ## Estado atual
 
+### Cadernos compartilhados e Markdown — 23/10/2026
+
+O mesmo caderno agora pode ser privado ou público. Público significa leitura por qualquer conta autenticada; dono e whitelist podem editar em conjunto com Yjs, cursores e seleções. Lista negra e bloqueio social prevalecem; cadernos privados aparecem no perfil do dono e na estante dos autorizados, mas não nos perfis deles. Cadernos públicos aparecem no perfil do dono e de colaboradores autorizados, sem revelar os privados em perfis de terceiros. A chave do livro é encapsulada para cada participante com ECDH, sem compartilhar a senha do dono. Render/Hocuspocus entrega presença e atualizações cifradas; Neon armazena envelopes, ACL, atualizações e versões. Revogação bloqueia novos acessos pelo serviço, mas não remove cópias baixadas. Markdown exporta páginas em texto legível e permite criar ou atualizar cadernos, com prévia, confirmação, cópia integral anterior e retenção de páginas omitidas. Os serviços estão configurados para Netlify/Render/Neon, mas não foram criados ou implantados.
+
+### Histórico coerente com a página e a escrita atual — 22/10/2026
+
+Após o proprietário adiar a publicação e priorizar UI/UX, mecânicas e bugs, corrigido o fluxo de versões no frontend. Consulta pendente não abre diálogo em outra página/caderno, no portal, em capa/verso vazio ou com edição visual pendente. A mesma guarda impede restaurar uma seleção antiga se a navegação mudar com o diálogo aberto.
+
+A abertura aguarda confirmação das edições e consulta novamente se a geração mudar durante a busca, inclusive quando o autosave já confirmou a geração nova. Isso evita restaurar antes de preservar a escrita atual e evita uma lista desatualizada após digitação durante a consulta. Botão mostra Carregando… e volta a Versões em sucesso, falha ou cancelamento; janela identifica o número da página. Nenhuma dependência ou mudança em SQL/envelopes.
+
+Regressões executam os handlers reais com Promises controladas: navegação durante envio/consulta, edição nos dois intervalos, autosave concorrente, erros e restauração com contexto antigo. O código anterior falhou em 14 dos 15 cenários iniciais; os testes foram ampliados para 18 cenários. Validação final: 95 testes sem falhas ou skips, incluindo PostgreSQL local, e sintaxe de 62 arquivos aprovada. Esta etapa não teve conferência manual da janela no navegador.
+
+### Índice com prévia das folhas sem título — 21/10/2026
+
+Substituída a frase fixa Uma nova ideia no índice pelo início da anotação quando o título está vazio. Somente a primeira linha não vazia passa pelo renderizador Markdown seguro existente e depois é convertida em texto; títulos preenchidos continuam prioritários. Folhas vazias usam Sem título. Nenhuma escrita em título/conteúdo, alteração de payload ou dependência nova.
+
+Ensaio no navegador em 1280×720 confirmou os títulos derivados das duas folhas da prévia, remoção de marcadores de cabeçalho/negrito/código, título vazio e Markdown original preservados por asserts sobre o DOM. Nova folha ficou identificada como 03 Sem título. Captura page-index-previews.png. Tentativa de conferir preenchimento de título vazio pelo navegador não foi concluída, pois o campo está recolhido pelo design atual; essa interação não foi validada. Alturas menores e dispositivos físicos não foram conferidos nesta etapa. Validação final: 77 testes sem falhas ou skips, incluindo PostgreSQL local, e sintaxe de 61 arquivos aprovada.
+
+### Escolha de amizade sem interrupção da consulta automática — 21/10/2026
+
+O ciclo de mensagens aguarda quando o seletor de destinatário está com foco. Antes, perform podia desabilitar esse seletor a cada consulta de fundo e interromper seu uso. Ao sair do seletor, a consulta volta no próximo ciclo de 10 segundos. Conservados bloqueio de operações simultâneas, rascunhos, erro/sucesso e proteção contra resposta de outra conversa.
+
+Regressão no teste social existente capturou o callback do intervalo e primeiro falhou no código anterior: uma consulta iniciava durante foco no seletor. Após a correção, exige ausência desse pedido e seletor habilitado, e confirma retomada ao focar a mensagem. Validação final: 77 testes sem falhas ou skips, incluindo PostgreSQL local, e sintaxe de 61 arquivos aprovada. Comportamento do menu nativo não foi ensaiado manualmente nesta etapa.
+
+### Mensagens de salvamento e conferência pública — 21/10/2026
+
+renderSaveState conserva o texto atual quando estado de salvamento, erro de envio e aviso de proteção local não mudam. Evita substituir repetidamente os nós de texto das regiões status/alert durante a escrita e o autosave; mensagens, prioridades, botões de resolução e lógica de persistência permanecem iguais. Regressão executa a função real com contagem de escritas e cobre repetição, edição adicional no mesmo estado, falha e confirmação. Falhou no código anterior e passou após a correção. Validação final: 77 testes sem falhas ou skips, incluindo PostgreSQL local, e sintaxe de 61 arquivos aprovada. Anúncio com leitor de tela físico ainda não foi conferido.
+
+Acesso de leitura a https://libr4ry.netlify.app exibiu Page not found do Netlify, registrado em public-release-404.png; não comprova disponibilidade do nome ou configuração da conta. Não houve login no painel, provisionamento nem deploy. A publicação real continua pendente.
+
+### Concorrência na limpeza dos rascunhos — 21/10/2026
+
+Reproduzida falha em clearDraft: enquanto a remoção do rascunho confirmado aguardava armazenamento, uma nova edição podia gerar outro rascunho; ao concluir, a limpeza antiga zerava a referência nova. O registro cifrado continuava no armazenamento, mas uma limpeza posterior já não o encontrava pela referência, podendo reaparecer como rascunho obsoleto ao entrar novamente.
+
+Correção compartilhada pelo autosave, logout e cópia de conflito: capturar as referências antes da remoção e zerar somente as que continuarem iguais. Preservados comparação de stamp no IndexedDB, erros, cifragem e guardas de geração/lote. Regressão primeiro falhou no código anterior e passou após a correção; simula remoção pendente, nova edição protegida, leitura do envelope e limpeza final após confirmação. Validação final: 76 testes sem falhas ou skips, incluindo PostgreSQL local, e sintaxe de 60 arquivos aprovada. A intercalação foi controlada no teste; não foi reproduzida manualmente no navegador.
+
+### Foco após falhas nos formulários — 21/10/2026
+
+Login/cadastro, desbloqueio, recuperação de senha e criação/edição de cadernos guardam o controle focado antes de bloquear o formulário durante a operação. Ao falhar, reabilitam os controles antes de devolver o foco, sem rolar a página nem roubar foco movido para outro controle. Sucesso mantém o foco do próximo fluxo. O formulário de cadernos também limpa o erro antigo ao iniciar nova tentativa. Módulo compartilhado incluído na lista pública e no pacote Netlify, sem dependência nova.
+
+Validação: 75 testes sem falhas ou skips, incluindo PostgreSQL local, e sintaxe de 60 arquivos aprovada. Autoverificação dos handlers de login/desbloqueio confirmou espera, bloqueio de repetição, erro, retorno ao botão e nova tentativa. Navegador com resposta 429 simulada confirmou retorno ao botão por clique e ao campo de senha por Enter; captura auth-focus-restored.png. Banco remoto, deploy e entrega real de e-mail continuam pendentes.
+
+### Regra de autenticação na borda do Netlify — 21/10/2026
+
+Criada Function auth com as quatro rotas de login/cadastro/recuperação e configuração rateLimit de 15 requisições em 60 segundos por IP e domínio. A Function api exclui exatamente essas rotas; ambas usam o mesmo handler, preservando as validações e a cota local, sem impor a cota de autenticação ao autosave. Nenhuma biblioteca, tabela ou credencial nova.
+
+Cliente traduz respostas 429 em HTML, vazias ou com JSON sem mensagem para um aviso de espera em português; mantém status/cause, erros específicos do backend e uma única tentativa. Testes cobrem correspondência de rotas/exclusões, configuração preservada no bundle esbuild de auth e formatos de erro. Configuração local não comprova bloqueio da rede Netlify: conferir aceitação no log do deploy e enforcement real, considerando atraso de até 10 segundos documentado pelo provedor. Não houve deploy nem alteração de conta remota. Validação: 74 testes sem falhas ou skips, incluindo PostgreSQL local, e sintaxe de 58 arquivos aprovada. Navegador recebeu 429 HTML de um servidor isolado de ensaio e exibiu o aviso em português, com controles liberados; captura auth-rate-limit.png. A resposta foi simulada, sem comprovar o bloqueio do Netlify.
+
+### Adaptador e build para Netlify — 19/10/2026
+
+Extraído createRequestHandler do servidor HTTP para compartilhar a mesma API com a Function. createServer conserva portas/timeouts locais. Adaptador Netlify converte Request/Response, preserva corpo/query/cookies/erros/cabeçalhos, exige origem HTTPS e usa apenas IP fornecido pelo contexto. Fecha o stream de entrada ao concluir. Rotas externas a /api/* não acessam assets pelo adaptador. Cota de autenticação permanece em memória por instância; proteção distribuída é pendência antes da abertura pública.
+
+requestPasswordReset aceita um registrador opcional da Promise de envio; a Function fornece context.waitUntil, mantendo a resposta genérica independente do tempo do provedor. Continua sem fila durável. Teste com PostgreSQL confirmou cadastro, sessão Secure/HttpOnly/SameSite, consulta de identidade, logout/revogação e resposta de recuperação antes da conclusão do envio simulado; destinatário inexistente não agenda envio.
+
+netlify.toml configura Node 24, esbuild e pg existente externo. build:netlify recompila o editor e recria dist somente com a lista de assets já permitida pelo servidor; gera cabeçalhos de segurança compartilhados. dist e .netlify ignorados no Git. Teste compara os arquivos, remove artefato antigo de ensaio e compila/executa a Function empacotada. Não houve instalação de dependência, CLI ou deploy remoto.
+
+Validação: build:netlify aprovado, 73 testes sem falhas ou skips incluindo PostgreSQL local e sintaxe de 57 arquivos, incluindo .mjs da Function. Runtime Netlify, banco hospedado, limites do plano, segredos, e-mail real e domínio ainda não foram validados.
+
+### Espera no social e preparação do banco para Netlify — 19/10/2026
+
+Ações manuais do social mostram Aguarde… em vez de apagar o status durante chamadas assíncronas. finally remove apenas esse aviso temporário; preserva confirmação e erro, e consultas periódicas continuam silenciosas. Teste existente estendido para espera, erro preservado, controle liberado e nova busca concluída sem aviso residual.
+
+Proprietário definiu Netlify e origem pretendida https://libr4ry.netlify.app, sem PostgreSQL hospedado disponível. database aceita NETLIFY_DB_URL como alternativa, conservando prioridade de DATABASE_URL, pool e opções existentes. Teste com Pool simulado cobre ambas as variáveis, reutilização do pool e configuração ausente; conexão hospedada não foi ensaiada. Documentadas pendências reais da adaptação HTTP/Functions e do envio assíncrono de recuperação; sem provisionamento remoto ou SDK novo. Validação final: 69 testes aprovados sem falhas ou skips, incluindo PostgreSQL local, e sintaxe de 53 arquivos aprovada.
+
+### Entrada e desbloqueio durante espera — 19/10/2026
+
+Login/cadastro e desbloqueio usam guarda de submissão e formulário inert durante operações assíncronas. A entrada desabilita também a abertura da recuperação; o desbloqueio informa aria-busy, mostra Desbloqueando… e bloqueia Sair da conta até concluir. finally libera os controles no sucesso e na falha. Reutiliza a proteção existente no formulário de cadernos, sem novas dependências ou mudanças de criptografia.
+
+Autoensaio por assert executou os handlers reais extraídos do app com resposta controlada: verificou segunda submissão ignorada, estados ocupados, erro sem reset dos campos e nova tentativa bem-sucedida. Navegador com login fictício retido confirmou Entrando…, controles indisponíveis, timeout explícito e liberação para tentar novamente; captura auth-wait.png. Não houve cadastro ou acesso a conta real. Suíte: 68 testes sem falhas ou skips; sintaxe de 52 arquivos aprovada. Desbloqueio foi verificado pelo autoensaio, sem leitor de tela ou dispositivo físico nesta rodada.
+
+### Encerramento dos testes com banco indisponível — 19/10/2026
+
+Reproduzido travamento da integração de cadernos: falha na limpeza SQL impedia fechar o servidor, exigindo terminar o subprocesso após 15 segundos. A limpeza das integrações de cadernos, social e recuperação agora fecha o servidor antes de consultar o banco e encerra o pool em finally. Erros continuam sendo reportados; falha de limpeza pode deixar apenas os próprios registros fictícios, sem ampliar os filtros de exclusão. Nenhuma alteração no comportamento da aplicação.
+
+Regressão executa cada integração num subprocesso com URL fictícia local indisponível, exige saída 1 e ECONNREFUSED, e falha se o processo precisar de timeout. O subprocesso remove NODE_TEST_CONTEXT herdado para iniciar seu runner independente. Os três cenários passaram após a correção. Suíte completa: 68 testes aprovados, sem falhas ou skips, com PostgreSQL real nos fluxos normais; sintaxe de 52 arquivos aprovada. Não foi necessário recompilar o frontend, pois esta rodada alterou somente testes e documentação.
+
+### Identificação das folhas no editor — 18/10/2026
+
+O editor visual usa o número da folha em seu nome acessível e atualiza aria-readonly ao alternar Ler/Escrever. renderPage fornece a identificação ao host por data-page-label, e os atributos dinâmicos do editor existente aplicam o nome apenas ao textbox, evitando anúncio duplicado do contêiner. Nenhuma alteração no conteúdo cifrado ou dependência.
+
+Prévia no navegador confirmou criação por Enter com foco na página 3, nomes distintos nas páginas 2/3, persistência dos nomes após digitação e alternância contenteditable/aria-readonly nos dois modos sem perder o texto. Build aprovado, sintaxe de 51 arquivos e 65 testes sem falhas ou skips, incluindo PostgreSQL. Essa conferência de DOM/teclado não substitui leitor de tela real. Captura page-labels-writing.png registra a escrita; a prévia não salva ao recarregar.
+
+### Avisos sem interrupção prematura — 15/10/2026
+
+notify agora cancela o temporizador anterior antes de exibir a nova mensagem. Antes, dois avisos separados por 4,9 segundos faziam o segundo desaparecer após 0,1 segundo. Autoensaio por assert executou a função real com relógio simulado e confirmou cinco segundos completos para o segundo aviso. A notificação não contém ações e usa pointer-events: none, mantendo leitura por role=status sem interceptar cliques sobre a navegação.
+
+Prévia no navegador confirmou mensagem de seleção de tinta visível, pointer-events computado e passagem à página 2 com o aviso aberto. Aviso posicionado acima da navegação; medição no navegador em 1280×720 confirmou base do aviso em 624 px e topo dos controles em 636 px, sem sobreposição. Captura notice-polish.png registra o aviso. Revisão das rotinas de virada confirmou guardas existentes de cancelamento ao trocar movimento/preferência do sistema; não houve alteração da física ou alegação de ganho de FPS nesta rodada.
+
+### Conforto nas transições e saída pendente — 15/10/2026
+
+Portal e diálogos recebem entrada por opacidade de 160 ms, sem deslocar alvos ou aguardar animação para interagir; seletor alcança também Perfil/Social, que usam portal-view. Regra somente para ausência de preferência de movimento reduzido. Navegador confirmou animação/duração computadas na coleção, no diálogo e no perfil, opacidade final 1, foco do diálogo e largura do documento sem excesso no perfil em 1280 px. Captura portal-polish.png registra composição final; não é prova de FPS ou teste de conforto com participantes.
+
+Corrigido aviso de saída: creatingBook ainda não integra books, por isso não entrava na proteção anterior. Sair agora conserva a sessão e orienta retomar Novo caderno; beforeunload inclui a criação pendente. Autoensaio por assert executa os próprios handlers extraídos do app, verifica recusa antes do logout social, aviso de fechamento e preservação dos casos limpo/edição visual. O navegador pode não oferecer confirmação nativa, especialmente em encerramento móvel; tentativa continua apenas na memória da aba. Sintaxe, CSS processado pelo esbuild e 65 testes aprovados sem skips. Aviso nativo e preferência do sistema não foram alternados no navegador nesta rodada.
+
+### Criação idempotente após resposta perdida — 15/10/2026
+
+Cliente conserva ID, chave e envelopes da criação até a confirmação; Novo caderno retoma a tentativa pendente na mesma aba, inclusive ao reabrir o diálogo. Edições posteriores são encaminhadas pelo autosave após confirmar o pedido original. Servidor registra recibo na tabela existente, atomicamente com caderno/primeira página, e reconhece pedidos iguais concorrentes ou repetidos após salvamento posterior. Reutilizar ID com outro conteúdo ou proprietário recebe 409, sem sobrescrever dados. Sem migração ou dependência nova.
+
+A cópia de conflito também conserva o mesmo caderno entre tentativas; antes de limpar o rascunho original, conclui lotes anteriores e envia as edições adicionais. Tentativas pendentes ficam só na memória da aba: recarregar ou fechar exige conferir a coleção antes de criar de novo. Testes cobrem concorrência SQL, isolamento, alteração de pedido, resposta perdida após commit real, repetição após autosave e decifragem das notas reabertas. Validação: 65 testes passaram sem skips, incluindo PostgreSQL; sintaxe de 51 arquivos aprovada. Ensaio posterior no navegador com PostgreSQL: primeira resposta de criação truncada após commit, erro exibido e formulário liberado; fechar/reabrir conserva nome e avisa sobre tentativa pendente. Segunda tentativa com nome revisado abre o caderno com Salvo. Assert externo confirmou dois POSTs, um único caderno e metadados decifrados com o nome revisado na revisão 2. Registros fictícios removidos; captura creation-retry-confirmed.png registra a coleção resultante.
+
+### Criação protegida durante espera — 15/10/2026
+
+Reproduzido em navegador com PostgreSQL e atraso de seis segundos: Escape fechava Novo caderno durante o envio, permitindo iniciar outra operação enquanto a primeira continuava. Agora o formulário fica inert, o diálogo informa aria-busy e o botão mostra Criando caderno…; cancelamento e submissão repetida ficam bloqueados. Finalmente libera o formulário tanto no sucesso quanto no erro, mantendo os campos em caso de falha. Organização/edição reutiliza a mesma guarda, sem alterar formato cifrado ou persistência.
+
+Ensaio antes/depois confirmou fechamento antecipado na versão anterior e diálogo aberto/ocupado até a conclusão na corrigida. Conferência por assert contabilizou duas tentativas e dois cadernos persistidos; os registros fictícios foram removidos. O caminho de erro não foi ensaiado no navegador nesta rodada. A limitação de repetição após timeout foi tratada na entrada seguinte sobre criação idempotente.
+
+### Teclado e identificação dos diálogos — 15/10/2026
+
+Corrigido Ir para o conteúdo: antes apontava para o portal oculto na entrada e alterava o fragmento usado pela navegação. Agora foca o painel de autenticação ou main conforme a tela visível, sem mudar URL/histórico. Destinos têm tabindex negativo, sem acrescentar paradas à sequência normal. Criação/edição de caderno, desbloqueio, versões e recuperação de rascunhos receberam aria-labelledby ligado ao título; todos os diálogos têm nome resolvido no DOM.
+
+Navegador confirmou Enter no atalho, próximo Tab no e-mail, foco em main com rotas #notebook/#library preservadas, abertura de Novo caderno por teclado, foco contido e Escape retornando a new-notebook. Essa conferência de teclado/DOM não substitui teste com leitor de tela real.
+
+### Falhas de comunicação compreensíveis — 15/10/2026
+
+O cliente HTTP compartilhado por autenticação, recuperação, social e cadernos traduz falha de conexão, timeout e resposta não JSON/incompleta para mensagens em português. Mantém status HTTP e causa técnica, rejeita JSON sem objeto e não reproduz HTML/respostas internas nas mensagens. Timeout durante leitura também é reconhecido; não indica que a operação foi desfeita nem repete requisições automaticamente. Salvamento conserva o lote idempotente existente e o rascunho pendente. Teste cobre queda de rede, timeout antes/depois dos cabeçalhos, HTML de proxy 401/502, JSON inválido, erro de API e resposta válida. Verificação: build e sintaxe de 51 arquivos aprovados; 64 testes passaram, sem skips, incluindo PostgreSQL e preservação do lote após timeout.
+
+### Continuidade da recuperação — 15/10/2026
+
+A tela de nova senha oferece Solicitar outro link sem fechar o diálogo: troca para e-mail, limpa senhas/token e mantém o foco no campo correto. Durante envio, essa ação e o fechamento ficam bloqueados; após sucesso, só resta Entrar. Fechar por Cancelar ou Escape também limpa os campos. Teste do controlador cobre confirmação divergente, erro de link expirado, troca durante envio, nova solicitação e conclusão sem manter senhas no formulário. Validação: 63 testes aprovados sem skips, sintaxe de 51 arquivos e navegador confirmando a transição para e-mail no mesmo diálogo.
+
+### Recuperação por Resend e ensaio de restauração — 15/10/2026
+
+Implementado Esqueci a senha da conta → solicitação genérica → link de 30 minutos → nova senha → revogação de sessões e novo login. Resend HTTP usa fetch nativo, chave e remetente no ambiente, sem dependência adicional. Migração 003 guarda somente hash do token e consumo atômico; nova emissão invalida anteriores, com três emissões por conta/hora e limite de autenticação por IP. Login e redefinição compartilham bloqueio do usuário para evitar sessão criada com senha antiga após troca concorrente. Chaves e envelopes dos cadernos permanecem intactos.
+
+Verificação: build aprovado, sintaxe de 50 arquivos JavaScript e 62 testes aprovados, sem skips, incluindo PostgreSQL, expiração, repetição, consumo concorrente, revogação, provedor simulado e recuperação desativada. Navegador conferiu solicitação genérica, abertura por fragmento com remoção da URL e tela de nova senha em 320 px. Credenciais novas não foram digitadas pelo navegador; troca completa coberta pela API de ensaio.
+
+check-backup.js executou pg_dump/pg_restore em dois bancos temporários próprios com as três migrações, comparou tabelas e dados sociais fictícios e decifrou o conteúdo restaurado. Dados reais não foram alterados. Não configura backup automático de produção.
+
+Pendências operacionais: configurar RESEND_API_KEY, RECOVERY_FROM e PUBLIC_ORIGIN; validar entrega real/domínio HTTPS e backup da hospedagem. Envio atual roda em memória, sem fila durável; falha ou reinício exige nova solicitação. Não existe recuperação administrativa da senha de conteúdo.
+
+### Saída com rascunhos sociais — 15/10/2026
+
+Corrigida a ordem de saída: rascunhos sociais são confirmados antes de chamar logout, operações em andamento impedem a saída e novas consultas ficam suspensas durante o encerramento. O portal fica inerte enquanto conclui o salvamento; falhas restauram a interação sem descartar os textos. Os rascunhos só são limpos após sucesso da saída, evitando um aviso tardio de beforeunload depois da sessão encerrada. Teste de regressão cobre cancelamento, suspensão, erro de operação, rascunhos de publicação/mensagem e limpeza final. Navegador: prévia preserva o texto após cancelamento e retorna à entrada quando sai sem rascunho.
+
+### Revisão de lançamento — 15/10/2026
+
+Build e 58 testes aprovados, sem skips, incluindo PostgreSQL e social. Conferência atual no navegador: caderno em 390 px sem transbordamento horizontal; ferramentas Texto acessíveis, retorno à coleção e retomada pela home; data vazia em leitura sem formato/ícone; título vazio com altura zero. Cadastro em 320 px conserva rolagem e campos. Navegação da capa às duas páginas e contracapa concluída, com lombada espelhada corrigida e sem erros/avisos no console dessa aba. A inspeção usa dados fictícios da prévia; não comprova teclado virtual, toque físico, outros motores de navegador ou implantação HTTPS. Domínio/proxy, backup e restauração reais e operação do social seguem pendentes conforme desenvolvimento.md.
+
+### Lombada da capa costurada — 15/10/2026
+
+A lombada usa a cor da própria capa com relevo neutro e acompanha sua espessura até a base. Isso cobre a faixa clara das folhas sob a encadernação e elimina o tom marrom fixo em capas pretas. Contracapa mantém o espelhamento; corrigido o raio dos cantos, que era invertido duas vezes pela combinação de border-radius e scaleX. Espiral e capa flexível preservam seus acabamentos.
+
+### Iluminação contínua no topo — 15/10/2026
+
+Removidos o degradê próprio do cabeçalho do caderno e seu fundo noturno, que produziam uma faixa retangular sobre a mesa. O topo passa a receber a iluminação ambiente contínua da cena, preservando os fundos dos controles.
+
+### Folhas sem título obrigatório — 15/10/2026
+
+Removido o convite Dê um título à sua ideia. Campo vazio não ocupa espaço na folha fora de foco; títulos existentes continuam visíveis e editáveis. O título permanece opcional e acessível pelo teclado ou pelo comando Topo da folha, sem alterar dados salvos.
+
+### Data discreta na folha — 15/10/2026
+
+Campo de data sem ícone de calendário e sem indicação mm/dd/yyyy quando vazio e fora de foco. Os segmentos nativos aparecem ao editar pelo teclado; datas preenchidas, validação, histórico e faces da virada mantêm o funcionamento anterior.
+
+### Capa sem botão — 15/10/2026
+
+Removido o botão interno Abrir caderno/Voltar às anotações da capa e contracapa. A abertura continua pelas bordas e pelos controles de navegação de páginas.
+
+### Luz sobre imagens da capa — 15/10/2026
+
+O brilho, o sombreado e a textura do material passam a uma camada sobre capa, texto e PNG, em vez de ficarem atrás da imagem no fundo. A textura recebe a mesma escala e continuidade em toda a superfície, inclusive sobre fundos opacos pretos; a opção Sem textura também desliga o grão nessa camada. A camada ignora eventos do ponteiro, acompanha capa/contracapa e é clonada na virada; imagem original e controles de edição permanecem preservados.
+
+### Miniaturas da coleção — 15/10/2026
+
+Capas com imagem usam título legível de 14 px, limitado a duas linhas no topo. Número decorativo e matéria ficam ocultos nessa miniatura para evitar texto minúsculo e liberar espaço para a ilustração. As coordenadas salvas da imagem e as capas sem imagem são preservadas; o nome completo continua no nome acessível do botão.
+
+Removida a linha horizontal acima da contagem de páginas na prévia das capas, preservando contagem, imagem e espaçamento.
+
+### Social e refinamentos para publicação — 14–15/10/2026
+
+Escopo social confirmado pelo proprietário: publicações, amizades e conversas no lançamento. Migração 002 e API persistem cópias revisadas de texto, busca por nome sem e-mail, convites/aceite/remoção, bloqueio e mensagens somente entre amizades aceitas. Feed/histórico paginados, limites por remetente e reenvio idempotente. Bloqueio interrompe acesso ao contato; notas cifradas nunca são publicadas implicitamente. Mensagens ficam legíveis ao servidor, com aviso explícito na interface.
+
+Folhas recebem campo de data opcional no payload cifrado, sem preencher dados antigos retroativamente; histórico e undo/redo preservados. Removidas divisórias extras no topo/rodapé, pauta com espessura mínima visual de 1 px, guarda durante arraste de capa sem título/contador da primeira página. Zoom/enquadramento animados com cancelamento por interação e respeito a movimento reduzido. Fontes ampliadas para sete; sete papéis, seis paletas e sete mesas opcionais mantêm o padrão marrom/creme anterior.
+
+Correção adicional de tinta: a CSP bloqueava a cor inline na leitura Markdown. O HTML agora preserva apenas o atributo hexadecimal validado; JavaScript aplica a variável de cor pelo mesmo helper em leitura, editor visual e faces da virada, sem liberar CSS arbitrário nem enfraquecer a CSP. Aplicação idempotente evita mutações repetidas no editor. Editar o título atualiza imediatamente a disponibilidade de desfazer/refazer; antes, o botão podia continuar desabilitado até outra ação. Conferido no navegador: tinta #9a3424 aparece como rgb(154, 52, 36) na leitura e na edição.
+
+Servidor preparado para origem pública HTTPS, cookie Secure, HSTS, restrições de frames/permissões e timeouts. Concorrência de scrypt limitada antes de saturar recursos; encerramento por sinais fecha servidor e pool. Migrações são versionadas em ordem e preservam dados existentes. Configuração/limites da hospedagem documentados em desenvolvimento.md. Sem dependências novas.
+
+Verificação de 15/10: build e 58 testes passaram, sem skips, incluindo PostgreSQL, isolamento social, paginação do histórico, repetição na cota, bloqueio, data cifrada, câmera e proxy confiável. Ensaio visual confirmou cadastro, login/desbloqueio, publicar texto literal sem executar HTML, enviar/aceitar convite, enviar/reabrir conversa e controles sociais de 44 px no celular, sem transbordamento horizontal. Campo de envio permanece visível no desktop. Contas fictícias de UI foram removidas após o ensaio. Arraste curto/confirmado de capa, data/desfazer, novas fontes, zoom e cores foram conferidos; documento permanece sem rolagem no desktop. A validação de domínio/TLS, topologia de proxy, backups reais e toque físico depende do ambiente de lançamento.
+
 ### Entrada, home e estantes — 12/10/2026
 
 Login/cadastro e navegação reconstruídos em madeira, marrom e creme, com ilustrações próprias. O fluxo real é cadastro ou login → desbloquear conteúdo → Início, com três destinos centrais: **Perfil, Estantes e Social**. O último caderno pode ser retomado por um botão explícito. Cabeçalho, formulários, diálogos, coleção e estados vazios seguem a identidade quente do editor, com foco por teclado e movimento reduzido.

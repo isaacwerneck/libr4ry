@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import markdownit from 'markdown-it';
-import { installStudyStyles, styledSelection, styleRanges, plainStudyText, continueLine, findNotebookPages, validInk, rgbInk, writingShortcut } from '../public/notebook-writing.js';
+import { installStudyStyles, styledSelection, styleRanges, plainStudyText, continueLine, findNotebookPages, validInk, rgbInk, writingShortcut, applyStudyColors } from '../public/notebook-writing.js';
 import { planPageEdit, countWords, protectedBlocks } from '../public/pagination.js';
 import { preferences } from '../public/notebook-preferences.js';
 import { createStudyReminder } from '../public/notebook-reminder.js';
@@ -35,12 +35,31 @@ test('RGB valida limites e cores personalizadas preservam conteúdo sem permitir
   assert.equal(validInk('#ffffff;background:url(evil)'), false);
   const md = installStudyStyles(markdownit({ html: false }));
   const source = '{{l4;serif;#0080ff;20}}**ideia**{{/l4}}';
-  assert.match(md.renderInline(source), /style="color:#0080ff".*<strong>ideia<\/strong>/);
+  assert.match(md.renderInline(source), /data-study-ink="#0080ff".*<strong>ideia<\/strong>/);
   assert.equal(plainStudyText(source), '**ideia**');
   assert.deepEqual(styleRanges(source), [[0, source.length]]);
   assert.equal(styledSelection('ideia', 0, 5, 'sans', '#0080ff', 16).text, '{{sans;#0080ff;16|ideia}}');
   assert.equal(md.renderInline('{{l4;sans;#fff;16}}texto{{/l4}}').includes('<span'), false);
   assert.equal(md.renderInline('{{l4;sans;#123456;background:red;16}}texto{{/l4}}').includes('style='), false);
+});
+
+test('tinta personalizada usa variável validada sem CSS inline e sem mutações repetidas no editor', () => {
+  const values = ['#9a3424', '#ffffff;background:url(evil)', '#fff', null];
+  let writes = 0;
+  const elements = values.map(value => {
+    const properties = new Map();
+    return { getAttribute: () => value, style: {
+      getPropertyValue: name => properties.get(name) || '',
+      setProperty(name, color) { writes++; properties.set(name, color); },
+    } };
+  });
+  const root = { querySelectorAll: () => elements };
+  applyStudyColors(root);
+  assert.equal(elements[0].style.getPropertyValue('--study-ink'), '#9a3424');
+  assert.equal(writes, 1);
+  applyStudyColors(root);
+  assert.equal(writes, 1);
+  assert.equal(installStudyStyles(markdownit()).render('{{sans;#9a3424;16|cor}}').includes('style='), false);
 });
 
 test('atalhos respeitam seleção, composição, AltGraph e combinações reservadas', () => {

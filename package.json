@@ -8,22 +8,30 @@
   },
   "scripts": {
     "build": "node scripts/build-editor.js",
+    "build:netlify": "npm run build && node scripts/build-netlify.js",
     "prestart": "npm run build",
     "start": "node --env-file-if-exists=.env server.js",
     "predev": "npm run build",
     "dev": "node --env-file-if-exists=.env --watch server.js",
+    "collaboration": "node --env-file-if-exists=.env collaboration-server.js",
     "db:migrate": "node --env-file-if-exists=.env scripts/migrate.js",
     "test": "node --env-file-if-exists=.env --test tests/*.test.js",
     "check": "node scripts/check.js"
   },
   "dependencies": {
+    "@hocuspocus/provider": "^4.7.1",
+    "@hocuspocus/server": "^4.7.1",
     "@tiptap/core": "^3.31.4",
+    "@tiptap/extension-collaboration": "^3.31.4",
+    "@tiptap/extension-collaboration-caret": "^3.31.4",
     "@tiptap/extension-list": "^3.31.4",
     "@tiptap/extension-table": "^3.31.4",
     "@tiptap/markdown": "^3.31.4",
     "@tiptap/starter-kit": "^3.31.4",
-    "markdown-it": "^15.0.2",
-    "pg": "^8.23.1"
+    "@tiptap/y-tiptap": "^3.0.10",
+    "markdown-it": "^15.0.3",
+    "pg": "^8.23.1",
+    "yjs": "^13.6.33"
   },
   "devDependencies": {
     "esbuild": "^0.28.2"

@@ -1,5 +1,7 @@
 # Requisitos funcionais — Library4
 
+Atualização RF-M03 (15/10/2026): recuperação da senha da conta implementada por e-mail via Resend, condicionada à configuração do provedor. Link único de 30 minutos, cotas e revogação de sessões; não altera nem recupera a senha de conteúdo. Esta entrega substitui referências anteriores a recuperação de login pendente. Entrega externa e operação na hospedagem ainda precisam de validação.
+
 [← Documentação](README.md) · [Guia de uso atual](uso.md)
 
 Base: [proposta](proposta.md). Status: especificação para implementação, não checklist de funcionalidades existentes. As sugestões de política permanecem em aberto até serem confirmadas.
@@ -10,7 +12,7 @@ Base: [proposta](proposta.md). Status: especificação para implementação, nã
 - **Visitante:** lê somente uma publicação pública disponível; não acessa versões privadas nem edita.
 - **Administrador:** opera contas e infraestrutura; não recebe acesso legível ao conteúdo privado.
 
-O MVP inicial somente privado foi aprovado. Publicação e whitelist de destinatários entram depois; não liberar opções incompletas.
+Atualização de 14/10/2026: o proprietário incluiu publicações, amizades e conversas no lançamento. A implementação atual publica cópias de texto para contas autenticadas, com revisão e consentimento explícitos; não libera biblioteca ou estatísticas privadas. Busca por nome, convites com aceite, remoção de amizade, bloqueio e conversas entre amizades aceitas funcionam pela API e PostgreSQL. Mensagens não têm criptografia de ponta a ponta. RF-P01 anônimo e compartilhamento de caderno inteiro/whitelist continuam sendo propostas distintas; não confundir com o feed autenticado entregue. Recuperação de login segue pendente e não é anunciada como disponível.
 
 ## 2. Requisitos do MVP
 

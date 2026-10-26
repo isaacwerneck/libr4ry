@@ -1,4 +1,10 @@
 import { Editor, Mark } from '@tiptap/core';
+import Collaboration, { isChangeOrigin } from '@tiptap/extension-collaboration';
+import CollaborationCaret from '@tiptap/extension-collaboration-caret';
+import { prosemirrorJSONToYXmlFragment, yXmlFragmentToProseMirrorRootNode } from '@tiptap/y-tiptap';
+export { CollaborationClient } from './collaboration-client.js';
+export { createSharedDocument, commitSharedModel, readSharedModel } from './shared-model.js';
+export * as SharedY from 'yjs';
 import { Selection, TextSelection, AllSelection } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { DOMParser, DOMSerializer } from '@tiptap/pm/model';
@@ -6,7 +12,7 @@ import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from '@tiptap/markdown';
 import { TableKit } from '@tiptap/extension-table';
 import { TaskList, TaskItem } from '@tiptap/extension-list';
-import { validInk } from './notebook-writing.js';
+import { validInk, applyStudyColors } from './notebook-writing.js';
 export { createAmbientLight } from './notebook-ambient.js';
 
 export function selectionHighlight(state, focused, editable) {
@@ -15,7 +21,7 @@ export function selectionHighlight(state, focused, editable) {
   return DecorationSet.create(state.doc, [Decoration.inline(selection.from, selection.to, { class: 'study-selection' })]);
 }
 
-const choices = { font: ['sans', 'serif', 'mono', 'hand'], ink: ['ink', 'rust', 'blue', 'plum'], size: ['14', '16', '18', '20', '24'] };
+const choices = { font: ['sans', 'serif', 'mono', 'hand', 'book', 'humanist', 'typewriter'], ink: ['ink', 'rust', 'blue', 'plum'], size: ['14', '16', '18', '20', '24'] };
 const StudyStyle = Mark.create({
   name: 'studyStyle',
   priority: 1000,
@@ -36,7 +42,7 @@ const StudyStyle = Mark.create({
   renderHTML({ mark }) {
     const ink = mark.attrs.ink;
     return ['span', { class: `study-font-${mark.attrs.font} study-ink-${ink.startsWith('#') ? 'custom' : ink} study-size-${mark.attrs.size}`,
-      ...(ink.startsWith('#') && validInk(ink) ? { 'data-study-ink': ink, style: `color:${ink}` } : {}) }, 0];
+      ...(ink.startsWith('#') && validInk(ink) ? { 'data-study-ink': ink } : {}) }, 0];
   },
   renderMarkdown(node, helpers) {
     return `{{l4;${node.attrs.font};${node.attrs.ink};${node.attrs.size}}}${helpers.renderChildren(node.content || [])}{{/l4}}`;
@@ -48,12 +54,23 @@ export function createVisualEditor(element, render, onUpdate, onSelection, onErr
   let source = '';
   let formatting = false;
   let writing = true;
-  const editor = new Editor({
+  let collaborative = null;
+  function makeEditor() { return new Editor({
     element, injectCSS: false,
     extensions: [StarterKit.configure({ underline: false, undoRedo: false, link: { openOnClick: false, autolink: false } }),
-      Markdown, TableKit.configure({ table: { resizable: false } }), TaskList, TaskItem.configure({ nested: true }), StudyStyle],
+      Markdown, TableKit.configure({ table: { resizable: false } }), TaskList, TaskItem.configure({ nested: true }), StudyStyle,
+      ...(collaborative ? [Collaboration.configure({fragment:collaborative.fragment}), CollaborationCaret.configure({
+        provider:{awareness:collaborative.awareness},user:{name:collaborative.user.display_name},
+        render(user) {
+          const cursor=element.ownerDocument.createElement('span'),label=element.ownerDocument.createElement('span');
+          cursor.className='shared-caret';label.className='shared-caret-label';label.textContent=String(user.name || 'Participante').slice(0,60);
+          cursor.append(label);return cursor;
+        },
+        selectionRender:()=>({class:'shared-selection'}),
+      })] : [])],
     editorProps: {
-      attributes: { class: 'visual-content markdown', role: 'textbox', 'aria-multiline': 'true', 'aria-label': 'Anotações da página' },
+      attributes: () => ({ class: 'visual-content markdown', role: 'textbox', 'aria-multiline': 'true', 'aria-readonly': String(!writing),
+        'aria-label': element.getAttribute('data-page-label') || 'Anotações da página' }),
       decorations: state => selectionHighlight(state, element.contains(element.ownerDocument.activeElement), writing),
       handlePaste(view, event) {
         // Colagem externa entra como texto; impede estilos/HTML inesperados de documentos de terceiros.
@@ -62,9 +79,10 @@ export function createVisualEditor(element, render, onUpdate, onSelection, onErr
         event.preventDefault(); editor.commands.insertContent(render(text)); return true;
       },
     },
-    onUpdate() {
-      if (loading) return;
+    onUpdate({ transaction }) {
+      if (loading || (collaborative && isChangeOrigin(transaction))) return;
       try {
+        applyStudyColors(element);
         source = editor.getMarkdown();
         const prefix = editor.markdown.serialize(editor.state.doc.cut(0, editor.state.selection.from).toJSON());
         onUpdate(source, Math.min(source.length, prefix.length), !formatting);
@@ -73,15 +91,29 @@ export function createVisualEditor(element, render, onUpdate, onSelection, onErr
     },
     onSelectionUpdate() { if (!loading) onSelection(); },
     onFocus() { onSelection(); },
-  });
+  }); }
+  let editor = makeEditor();
   return {
-    editor,
+    get editor() { return editor; },
+    connect(fragment,awareness,user) {
+      if ((collaborative?.fragment || null) === fragment) return;
+      loading=true;
+      try { editor.destroy();collaborative=fragment ? {fragment,awareness,user} : null;editor=makeEditor();source=null; }
+      finally {loading=false;}
+    },
+    writeFragment(value,fragment) {
+      const container=element.ownerDocument.createElement('div');container.innerHTML=render(value);
+      const node=DOMParser.fromSchema(editor.schema).parse(container);
+      prosemirrorJSONToYXmlFragment(editor.schema,node.toJSON(),fragment);
+    },
+    serializeFragment(fragment) {return editor.markdown.serialize(yXmlFragmentToProseMirrorRootNode(fragment,editor.schema).toJSON());},
     surface(value) {
       const container = element.ownerDocument.createElement('div');
       container.innerHTML = render(value);
       const document = DOMParser.fromSchema(editor.schema).parse(container);
       container.replaceChildren(DOMSerializer.fromSchema(editor.schema).serializeFragment(document.content, { document: element.ownerDocument }));
       container.className = 'visual-content markdown';
+      applyStudyColors(container);
       return container;
     },
     reload() { source = null; },
@@ -101,12 +133,14 @@ export function createVisualEditor(element, render, onUpdate, onSelection, onErr
     load(value, editable) {
       writing = editable;
       editor.setEditable(editable, false);
+      if (collaborative) { source=editor.getMarkdown(); return; }
       if (source === value) return;
       loading = true;
       try {
         const html = render(value);
         editor.commands.setContent(html, { emitUpdate: false, errorOnInvalidContent: true });
         source = value;
+        applyStudyColors(element);
       } finally { loading = false; }
     },
     format(name) {

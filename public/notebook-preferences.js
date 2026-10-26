@@ -1,16 +1,18 @@
 import { clampZoom } from './notebook-viewport.js';
 
+export const COVER_COLORS = { walnut: '#50392d', clay: '#7e4839', slate: '#3d4e57', moss: '#48563d', wine: '#633942', espresso: '#382a25' };
+
 export function preferences(value = {}) {
   const choice = (name, options, fallback) => options.includes(value?.[name]) ? value[name] : fallback;
   return {
-    paper: choice('paper', ['cream', 'white', 'sand'], 'cream'),
-    cover: choice('cover', ['walnut', 'clay', 'slate'], 'walnut'),
+    paper: choice('paper', ['cream', 'white', 'sand', 'ivory', 'sage', 'rose', 'mist'], 'cream'),
+    cover: choice('cover', Object.keys(COVER_COLORS), 'walnut'),
     coverColor: /^#[\da-f]{6}$/i.test(value?.coverColor || '') ? value.coverColor : '',
     finish: choice('finish', ['leather', 'cloth', 'smooth'], 'leather'),
-    font: choice('font', ['mono', 'serif', 'sans', 'hand'], 'sans'),
+    font: choice('font', ['mono', 'serif', 'sans', 'hand', 'book', 'humanist', 'typewriter'], 'sans'),
     binding: choice('binding', ['stitched', 'spiral', 'soft'], 'stitched'),
     ruling: choice('ruling', ['lined', 'plain', 'dotted', 'grid'], 'lined'),
-    desk: choice('desk', ['wood', 'dark', 'linen'], 'wood'),
+    desk: choice('desk', ['wood', 'dark', 'linen', 'oak', 'cherry', 'espresso', 'felt'], 'wood'),
     light: choice('light', ['warm', 'day', 'night'], 'warm'),
     layout: choice('layout', ['single', 'spread'], 'single'),
     motion: choice('motion', ['full', 'light', 'off'], 'full'),

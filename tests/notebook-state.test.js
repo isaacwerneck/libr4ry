@@ -191,7 +191,7 @@ test('Ctrl controla zoom/arraste, a roda normal não rola a cena e soltar o modi
   viewport.style = { setProperty() {} };
   viewport.setPointerCapture = () => {};
   globalThis.window = { scrollBy() {} };
-  const spread = { style: {} }; let selected;
+  const spread = { style: {}, getBoundingClientRect: () => ({ left: 0, top: 0, width: 1680, height: 1200 }) }; let selected;
   const scene = new EventTarget();
   setupNotebookViewport(viewport, spread, () => {}, value => { selected = value; }, scene);
   const dispatch = (type, properties) => {
@@ -255,6 +255,41 @@ test('rascunho só confirma proteção após gravação, exige chave/contexto e 
   assert.equal(records.size, 0);
   await assert.rejects(protectBook(value, async () => { throw new Error('Quota cheia'); }));
   assert.equal(value.localError.message, 'Quota cheia');
+});
+
+test('limpeza de rascunho salvo preserva a referência de uma edição protegida durante a remoção', async () => {
+  const value = book(); value.key = await importKey(makeSecret());
+  const records = new Map();
+  let releaseRemoval;
+  let started;
+  const removalStarted = new Promise(resolve => { started = resolve; });
+  const removalPending = new Promise(resolve => { releaseRemoval = resolve; });
+  let delayRemoval = true;
+  const store = async (operation, record) => {
+    if (operation === 'put') records.set(record.id, record);
+    if (operation === 'list') return [...records.values()];
+    if (operation === 'remove') {
+      if (delayRemoval) { delayRemoval = false; started(); await removalPending; }
+      if (records.get(record.id)?.stamp === record.stamp) records.delete(record.id);
+    }
+  };
+  await protectBook(value, store);
+  value.confirmed = value.generation;
+  const clearing = clearDraft(value, store);
+  await removalStarted;
+  value.pages[0].content = 'Nova edição enquanto o rascunho anterior é limpo';
+  value.generation++;
+  await protectBook(value, store);
+  const latest = value.localDraft;
+  releaseRemoval();
+  await clearing;
+  assert.equal(value.localDraft, latest, 'Limpeza anterior não pode perder a referência do novo rascunho');
+  assert.equal(records.size, 1);
+  assert.equal((await readDrafts(value, store))[0].value.pages[0].content, value.pages[0].content);
+  value.confirmed = value.generation;
+  await clearDraft(value, store);
+  assert.equal(records.size, 0, 'Após confirmar a edição nova, sua proteção local também deve ser limpa');
+  assert.equal(value.localDraft, null);
 });
 
 test('rascunho recupera lote idempotente após timeout com edição posterior', async () => {

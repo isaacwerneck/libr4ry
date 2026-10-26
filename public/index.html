@@ -4,26 +4,44 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#50392d">
-  <title>Library4 — seu espaço de estudo</title>
+  <title>Libr4ry — cadernos e estudos</title>
+  <meta name="description" content="Organize seus cadernos, escreva e estude em uma biblioteca pessoal. Compartilhe no social somente o que você escolher publicar.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="canonical" href="https://libr4ry.netlify.app/">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:site_name" content="Libr4ry">
+  <meta property="og:title" content="Libr4ry — cadernos e estudos">
+  <meta property="og:description" content="Cadernos, ideias e estudos em sua biblioteca pessoal.">
+  <meta property="og:url" content="https://libr4ry.netlify.app/">
+  <meta property="og:image" content="https://libr4ry.netlify.app/social-preview.jpg">
+  <meta property="og:image:width" content="1280">
+  <meta property="og:image:height" content="720">
+  <meta property="og:image:alt" content="Libr4ry, com livros sobre uma estante de madeira.">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/notebook.css">
   <link rel="stylesheet" href="/library.css">
   <script type="module" src="/app.js"></script>
 </head>
 <body>
-  <a class="skip-link" href="#main">Ir para o conteúdo</a>
+  <a class="skip-link" href="#auth-main">Ir para o conteúdo</a>
   <section id="auth-view" class="auth-layout">
     <div class="auth-story">
       <a class="wordmark" href="/">libr<span>4</span>ry<span class="brand-dot">.</span></a>
       <div class="library-illustration" aria-hidden="true"><div class="illustration-books"><i></i><i></i><i></i><i></i><i></i></div><div class="illustration-shelf"></div></div>
     </div>
-    <div class="auth-panel">
+    <div id="auth-main" class="auth-panel" tabindex="-1">
       <div class="auth-panel-inner">
         <h2 id="auth-heading">Entrar</h2>
         <form id="auth-form" method="post" action="/api/login">
           <label id="name-field" hidden>Como podemos chamar você?<input name="name" autocomplete="name" maxlength="60"></label>
           <label>E-mail<input name="email" type="email" autocomplete="username" required maxlength="254" placeholder="voce@exemplo.com"></label>
           <label>Senha da conta<input name="password" type="password" autocomplete="current-password" required minlength="8" maxlength="128" placeholder="Pelo menos 8 caracteres"></label>
+          <fieldset id="age-attestation" hidden disabled>
+            <legend>Idade mínima</legend>
+            <label class="check-label"><input name="adult-confirmed" type="checkbox" required> Confirmo que tenho 18 anos ou mais.</label>
+          </fieldset>
           <fieldset id="content-password-fields" hidden disabled>
             <legend>Proteção dos cadernos</legend>
             <label>Senha de conteúdo<input id="signup-content-password" type="password" autocomplete="off" minlength="4" maxlength="128" placeholder="Pelo menos 4 caracteres" required></label>
@@ -33,7 +51,9 @@
           <p id="auth-error" class="form-error" role="alert"></p>
           <button id="auth-submit" class="button primary" type="submit">Entrar</button>
         </form>
+        <button id="recovery-open" class="text-button" hidden>Esqueci a senha da conta</button>
         <button id="auth-toggle" class="text-button">Primeira vez? Crie sua conta</button>
+        <a class="text-button" href="/privacy.html" target="_blank" rel="noopener">Privacidade e contato (nova aba)</a>
         <div class="privacy-note"><span aria-hidden="true">◇</span><p>Seus cadernos são privados.<br>O conteúdo é protegido no seu dispositivo.</p></div>
       </div>
     </div>
@@ -52,7 +72,7 @@
         <div class="profile-row"><button class="account-link" data-view="profile"><span id="avatar" class="avatar">?</span><strong id="profile-name">Sua conta</strong></button><button id="logout" class="icon-button" aria-label="Sair da conta" title="Sair">Sair</button></div>
       </div>
     </header>
-    <main id="main" class="main">
+    <main id="main" class="main" tabindex="-1">
       <header class="topbar"><div><span class="breadcrumb">Seu espaço</span><span class="breadcrumb-divider">/</span><strong id="view-name">Cadernos</strong></div><span id="today" class="date-label"></span><button id="new-notebook" class="button primary compact">+ Novo caderno</button></header>
 
       <section id="home-view" class="home-view" hidden aria-label="Início"><div class="home-destinations">
@@ -61,12 +81,44 @@
         <button class="destination destination-social" data-view="social"><span class="destination-art" aria-hidden="true"><svg viewBox="0 0 120 100"><path d="M15 20h70v44H44L26 79V64H15zM87 38h18v43H80L67 91V78H54"/><path d="M29 36h40M29 48h28"/></svg></span><strong>Social</strong></button>
       </div><button id="continue-notebook" class="continue-notebook" hidden></button></section>
 
-      <section id="profile-view" class="portal-view" hidden aria-labelledby="profile-title"><div class="portal-heading"><h1 id="profile-title">Meu perfil</h1></div><div class="profile-layout"><article class="paper-panel identity-panel"><span id="profile-avatar" class="profile-avatar" aria-hidden="true"></span><h2 id="profile-display-name"></h2><p id="profile-email"></p><dl><div><dt>Cadernos</dt><dd id="profile-books-count">0</dd></div><div><dt>Estantes</dt><dd id="profile-shelves-count">0</dd></div></dl><button class="button dark" data-view="library">Ver meus cadernos</button></article><div class="profile-sections"><article class="paper-panel"><h2>Progresso</h2><div id="profile-metrics" class="profile-metrics"></div><button class="text-button" data-view="progress">Ver meu progresso</button></article><article class="paper-panel"><span class="coming-label">Em construção</span><h2>Amigos de biblioteca</h2><p>Este será o lugar para suas amizades. Busca, convites e conversas chegam em uma próxima etapa.</p><button class="text-button" data-view="social">Conhecer o espaço social</button></article></div></div></section>
+      <section id="profile-view" class="portal-view" hidden aria-labelledby="profile-title"><div class="portal-heading"><h1 id="profile-title">Meu perfil</h1></div><div class="profile-layout"><article class="paper-panel identity-panel"><span id="profile-avatar" class="profile-avatar" aria-hidden="true"></span><h2 id="profile-display-name"></h2><p id="profile-email"></p><button id="sharing-profile-open" class="text-button">Ver meu perfil público</button><a class="text-button" href="/privacy.html" target="_blank" rel="noopener">Privacidade e contato (nova aba)</a><dl><div><dt>Cadernos</dt><dd id="profile-books-count">0</dd></div><div><dt>Estantes</dt><dd id="profile-shelves-count">0</dd></div></dl><button class="button dark" data-view="library">Ver meus cadernos</button></article><div class="profile-sections"><article class="paper-panel"><h2>Progresso</h2><div id="profile-metrics" class="profile-metrics"></div><button class="text-button" data-view="progress">Ver meu progresso</button></article><article class="paper-panel"><h2>Amigos de biblioteca</h2><button class="text-button" data-view="social">Conhecer o espaço social</button></article></div></div></section>
 
-      <section id="social-view" class="portal-view" hidden aria-labelledby="social-title"><div class="portal-heading"><h1 id="social-title">Social</h1></div><p class="social-notice"><span class="coming-label">Em construção</span> Você já pode conhecer a interface. Publicações, busca de pessoas e mensagens ainda não estão disponíveis; seus cadernos continuam privados.</p><div class="social-layout"><nav class="social-sections" aria-label="Seções sociais"><button data-social="feed" aria-pressed="true">Cadernos compartilhados</button><button data-social="people" aria-pressed="false">Encontrar pessoas</button><button data-social="chat" aria-pressed="false">Conversas</button></nav><article class="paper-panel social-content"><section data-social-panel="feed"><span class="empty-illustration" aria-hidden="true">▤</span><h2>Cadernos compartilhados</h2><p>Quando o compartilhamento estiver pronto, cadernos publicados aparecerão aqui. Nada da sua biblioteca será publicado automaticamente.</p><button class="button dark" data-view="library">Voltar aos meus cadernos</button></section><section data-social-panel="people" hidden><h2>Pessoas</h2><label>Buscar por nome<input type="search" placeholder="Busca disponível em breve" disabled></label><p>Perfis públicos e pedidos de amizade serão habilitados junto ao sistema social.</p></section><section data-social-panel="chat" hidden><h2>Conversas</h2><div class="chat-placeholder"><p>Nenhuma conversa disponível nesta etapa.</p></div><label>Mensagem<textarea disabled placeholder="O bate-papo chega em breve" rows="2"></textarea></label></section></article></div></section>
+      <section id="social-view" class="portal-view" hidden aria-labelledby="social-title">
+        <div class="portal-heading"><h1 id="social-title">Social</h1><button id="social-refresh" class="button dark compact">Atualizar</button></div>
+        <p id="social-status" role="status" aria-live="polite"></p>
+        <div class="social-layout">
+          <nav class="social-sections" aria-label="Seções sociais"><button data-social="feed" aria-pressed="true">Publicações</button><button data-social="people" aria-pressed="false">Pessoas e amizades</button><button data-social="chat" aria-pressed="false">Conversas</button><button id="social-moderation-nav" data-social="moderation" aria-pressed="false" hidden>Denúncias</button></nav>
+          <article class="paper-panel social-content">
+            <section data-social-panel="feed">
+              <details class="social-compose"><summary>Nova publicação</summary><form id="social-post-form">
+                <label>Usar uma página<select id="social-book"><option value="">Escolher caderno</option></select></label>
+                <div class="social-actions"><label>Página<select id="social-page"></select></label><button id="social-copy-page" class="text-button" type="button">Copiar para revisão</button></div>
+                <label>Título<input id="social-post-title" required maxlength="120"></label>
+                <label>Texto público<textarea id="social-post-content" required maxlength="12000" rows="5"></textarea></label>
+                <label class="social-consent"><input id="social-publish-consent" type="checkbox" required> Publicar este texto para todas as pessoas com conta. O original continuará privado; mudanças futuras não atualizarão esta cópia.</label>
+                <button class="button dark" type="submit">Publicar</button>
+              </form></details>
+              <div id="social-posts"></div><button id="social-more-posts" class="text-button" hidden>Mais publicações</button>
+            </section>
+            <section data-social-panel="people" hidden>
+              <form id="social-search-form" class="social-actions"><label>Buscar por nome<input id="social-search" type="search" minlength="2" maxlength="60" required></label><button class="button dark" type="submit">Buscar</button></form>
+              <div id="social-results"></div><h2>Amizades e convites</h2><div id="social-friends"></div>
+              <details><summary>Pessoas bloqueadas</summary><div id="social-blocks"></div></details>
+            </section>
+            <section data-social-panel="moderation" hidden aria-label="Revisão de denúncias"><h2>Denúncias</h2><p>Revisão manual. Registros resolvidos são eliminados após 90 dias.</p><div id="social-reports"></div></section>
+            <section data-social-panel="chat" hidden>
+              <label>Conversar com<select id="social-recipient"><option value="">Escolher amizade</option></select></label>
+              <p class="social-privacy">Só vocês dois têm acesso pela interface. As mensagens são armazenadas no servidor e não têm criptografia de ponta a ponta.</p>
+              <button id="social-older-messages" class="text-button" hidden>Mensagens anteriores</button>
+              <div id="social-messages" class="social-messages" role="log" aria-label="Mensagens" aria-live="off"></div>
+              <form id="social-message-form"><label>Mensagem<textarea id="social-message" required maxlength="4000" rows="2" disabled></textarea></label><button id="social-send" class="button dark" type="submit" disabled>Enviar</button></form>
+            </section>
+          </article>
+        </div>
+      </section>
 
       <section id="library-view" class="library-view">
-        <div class="library-heading"><div><h1>Estantes</h1></div></div>
+        <div class="library-heading"><div><h1>Estantes</h1></div><button id="markdown-open" class="button compact">Importar Markdown</button></div>
         <div class="collection-tools"><label class="collection-search">Encontrar um caderno<input id="collection-search" type="search" maxlength="200" placeholder="Nome, matéria, tag ou estante"></label><label>Mostrar<select id="collection-filter"><option value="all">Todos os cadernos</option><option value="recent">Recentes primeiro</option><option value="favorites">Favoritos</option></select></label></div>
         <nav id="shelf-list" class="shelf-list" aria-label="Suas estantes"></nav>
         <div id="collection-save-state" class="collection-save-state" role="status" hidden></div>
@@ -79,7 +131,7 @@
 
       <section id="notebook-view" class="notebook-view" hidden>
         <div class="notebook-heading"><button id="back-library" class="text-button" aria-label="Voltar à coleção" title="Sua coleção">Estantes</button><div class="notebook-heading-line"><div><span id="notebook-subject" class="eyebrow"></span><h1 id="notebook-title"></h1></div><span id="save-state" class="save-state" role="status" aria-live="polite">Carregando</span></div><div id="notebook-tags" class="tags"></div>
-            <details id="writing-tools" class="notebook-hud writing-tools" open><summary aria-label="Formatação do texto" title="Formatação e tamanho da página">Aa<span class="tool-label">Texto</span></summary><div class="hud-panel"><button id="source-mode" class="text-button" aria-pressed="false" title="Editar a fonte Markdown">&lt;/&gt; Fonte Markdown</button><div class="direct-style"><label>Fonte<select id="direct-font"><option value="sans">Simples</option><option value="serif">Literária</option><option value="mono">Código</option><option value="hand">Manuscrita</option></select></label><label>Tamanho<select id="direct-size"><option>14</option><option selected>16</option><option>18</option><option>20</option><option>24</option></select></label><div class="ink-tools" role="group" aria-label="Cor da seleção"><button data-ink="ink" aria-label="Tinta grafite" title="Grafite">●</button><button data-ink="rust" aria-label="Tinta terracota" title="Terracota">●</button><button data-ink="blue" aria-label="Tinta azul" title="Azul">●</button><button data-ink="plum" aria-label="Tinta ameixa" title="Ameixa">●</button></div><button id="clear-text-style" class="text-button" title="Remover fonte, tamanho e tinta da seleção">Limpar estilo</button></div></div></details>
+            <details id="writing-tools" class="notebook-hud writing-tools" open><summary aria-label="Formatação do texto" title="Formatação e tamanho da página">Aa<span class="tool-label">Texto</span></summary><div class="hud-panel"><button id="source-mode" class="text-button" aria-pressed="false" title="Editar a fonte Markdown">&lt;/&gt; Fonte Markdown</button><div class="direct-style"><label>Fonte<select id="direct-font"><option value="sans">Simples</option><option value="serif">Literária</option><option value="mono">Código</option><option value="hand">Manuscrita</option><option value="book">Clássica de livro</option><option value="humanist">Humanista</option><option value="typewriter">Máquina de escrever</option></select></label><label>Tamanho<select id="direct-size"><option>14</option><option selected>16</option><option>18</option><option>20</option><option>24</option></select></label><div class="ink-tools" role="group" aria-label="Cor da seleção"><button data-ink="ink" aria-label="Tinta grafite" title="Grafite">●</button><button data-ink="rust" aria-label="Tinta terracota" title="Terracota">●</button><button data-ink="blue" aria-label="Tinta azul" title="Azul">●</button><button data-ink="plum" aria-label="Tinta ameixa" title="Ameixa">●</button></div><button id="clear-text-style" class="text-button" title="Remover fonte, tamanho e tinta da seleção">Limpar estilo</button></div></div></details>
             <details id="notebook-hud" class="notebook-hud"><summary aria-label="Opções do caderno" title="Aparência e opções do caderno"><span aria-hidden="true">☷</span><span class="tool-label">Caderno</span></summary>
              <div class="hud-panel"><div class="editor-toolbar"><div class="mode-control" aria-label="Modo da página"><button id="edit-mode" class="selected" aria-pressed="true">Escrever</button><button id="preview-mode" aria-pressed="false">Ler</button></div><div class="page-controls"><label>Folha<select id="page-size"><option value="small">Pequeno</option><option value="medium" selected>Médio</option><option value="large">Grande</option></select></label><label>Texto base<select id="font-size"><option value="14">14</option><option value="16" selected>16</option><option value="18">18</option><option value="20">20</option><option value="24">24</option></select></label><button id="history-button" class="text-button">Versões</button></div></div>
               <label class="motion-control">Virada <select id="motion-mode"><option value="full">Completa</option><option value="light">Leve</option><option value="off">Sem movimento</option></select></label>
@@ -90,25 +142,24 @@
               <details class="notebook-customization">
                 <summary>Estrutura e padrão do caderno</summary>
                 <label>Modelo<select id="book-binding"><option value="stitched">Capa dura costurada</option><option value="spiral">Espiral</option><option value="soft">Agenda flexível</option></select></label>
-                <label>Tom do papel<select id="paper-style"><option value="cream">Creme</option><option value="white">Claro</option><option value="sand">Areia</option></select></label>
-                <label>Paleta padrão<select id="cover-style"><option value="walnut">Madeira e couro</option><option value="clay">Terracota</option><option value="slate">Azul profundo</option></select></label>
+                <label>Tom do papel<select id="paper-style"><option value="cream">Creme</option><option value="white">Claro</option><option value="sand">Areia</option><option value="ivory">Marfim</option><option value="sage">Sálvia suave</option><option value="rose">Rosa antigo</option><option value="mist">Névoa</option></select></label>
+                <label>Paleta padrão<select id="cover-style"><option value="walnut">Madeira e couro</option><option value="clay">Terracota</option><option value="slate">Azul profundo</option><option value="moss">Musgo</option><option value="wine">Vinho</option><option value="espresso">Café</option></select></label>
                 <label>Cor padrão<input id="cover-color" type="color" value="#50392d"></label><button id="reset-cover-color" class="text-button">Restaurar cor do modelo</button>
                 <label>Material padrão<select id="cover-finish"><option value="leather">Couro ilustrado</option><option value="cloth">Tecido</option><option value="smooth">Capa lisa</option></select></label>
-                <label>Fonte padrão<select id="writing-font"><option value="mono">Monoespaçada</option><option value="serif">Literária</option><option value="sans">Simples</option><option value="hand">Manuscrita do sistema</option></select></label>
+                <label>Fonte padrão<select id="writing-font"><option value="mono">Monoespaçada</option><option value="serif">Literária</option><option value="sans">Simples</option><option value="hand">Manuscrita do sistema</option><option value="book">Clássica de livro</option><option value="humanist">Humanista</option><option value="typewriter">Máquina de escrever</option></select></label>
                 <button id="save-defaults" class="text-button">Usar como meu padrão neste dispositivo</button>
               </details>
               <details class="notebook-customization">
                 <summary>Papel e ambiente</summary>
                 <label>Pauta<select id="paper-ruling"><option value="lined">Linhas</option><option value="plain">Liso</option><option value="dotted">Pontilhado</option><option value="grid">Quadriculado</option></select></label>
-                <label>Mesa<select id="desk-style"><option value="wood">Madeira clara</option><option value="dark">Madeira escura</option><option value="linen">Linho</option></select></label>
+                <label>Mesa<select id="desk-style"><option value="wood">Madeira clara</option><option value="dark">Madeira escura</option><option value="linen">Linho</option><option value="oak">Carvalho</option><option value="cherry">Cerejeira</option><option value="espresso">Café escuro</option><option value="felt">Feltro verde</option></select></label>
                 <label>Luz<select id="light-style"><option value="warm">Luz amarela</option><option value="day">Luz da janela</option><option value="night">Noite tranquila</option></select></label>
                 <label class="reminder-option"><input id="reminder-enabled" type="checkbox"> Lembrete gentil a cada 45 minutos</label>
                 <label class="reminder-option"><input id="ambient-enabled" type="checkbox"> Luz viva</label><p id="ambient-status" class="spread-note" role="status"></p>
-                <p class="spread-note">A luz alcança mesa e caderno, sem modificar suas anotações.</p>
               </details>
                <details id="view-tools" class="notebook-hud view-tools"><summary>Enquadramento</summary><div class="hud-panel"><label class="zoom-control">Zoom <input id="notebook-zoom" type="range" min="10" max="800" step="1" value="100"><output id="zoom-value" for="notebook-zoom">100%</output></label><div class="hud-actions"><button id="center-notebook" class="text-button">Centralizar</button><button id="focus-writing" class="text-button">Voltar à escrita</button><button id="pan-notebook" class="text-button" aria-pressed="false">Mover caderno</button></div><p class="spread-note">Ctrl + roda amplia; Ctrl + arraste, Mover ou botão direito deslocam o caderno. Escape encerra Mover. Ver inteiro enquadra o objeto; Voltar à escrita aproxima o texto.</p></div></details>
               <button id="draft-button" class="text-button" hidden>Recuperar rascunhos locais</button>
-              <div id="hud-actions" class="hud-actions"><button id="page-top" class="text-button">Topo da folha</button></div>
+              <div id="hud-actions" class="hud-actions"><button id="markdown-export" class="text-button">Baixar Markdown</button><button id="sharing-open" class="text-button">Compartilhamento</button><button id="page-top" class="text-button">Topo da folha</button></div>
               <details id="index-tools" class="notebook-hud notebook-index"><summary title="Páginas, busca e lembretes">Índice</summary><div class="hud-panel">
                 <aside class="page-index"><div class="index-heading"><h2>Índice</h2><button id="add-page" class="icon-button" aria-label="Criar página" title="Criar página">+</button></div><label class="page-search-label">Encontrar uma página<input id="page-search" type="search" maxlength="200" placeholder="Título ou trecho das anotações"></label><p id="page-search-result" class="spread-note" role="status"></p><div id="page-list"></div><div class="goals"><h2>Pequenos passos</h2><form id="task-form"><label class="sr-only" for="task-input">Nova meta</label><input id="task-input" maxlength="200" placeholder="Adicionar uma meta"><button type="submit" class="icon-button" aria-label="Adicionar meta">+</button></form><div id="task-list"></div></div><div id="notebook-metrics" class="notebook-metrics"></div></aside>
               </div></details>
@@ -117,7 +168,7 @@
         </div>
         <div class="notebook-layout">
           <div class="writing-area">
-            <div class="paper-stage"><article id="paper" class="paper"><div class="paper-top"><span id="page-number">PÁGINA 01</span></div><label class="sr-only" for="page-title">Título da página</label><input id="page-title" class="page-title" maxlength="120" placeholder="Dê um título à sua ideia"><label class="sr-only" for="page-content">Conteúdo Markdown da página</label><textarea id="page-content" spellcheck="true" hidden placeholder="Comece com uma ideia…"></textarea><div id="page-visual" class="visual-host"></div><div id="page-preview" class="markdown" hidden></div><button class="page-corner" aria-label="Arrastar ou clicar para virar a folha" title="Arraste a ponta para virar"></button><div class="paper-bottom"><span id="line-count">0 linhas</span><span id="word-count">0 palavras</span><span id="page-position">01</span></div></article></div>
+            <div class="paper-stage"><article id="paper" class="paper"><div class="paper-top"><span id="page-number">PÁGINA 01</span><label class="sr-only" for="page-date">Data da página</label><input id="page-date" class="page-date" type="date" min="0001-01-01" max="9999-12-31" aria-label="Data da página"></div><label class="sr-only" for="page-title">Título da página</label><input id="page-title" class="page-title" maxlength="120" placeholder=""><label class="sr-only" for="page-content">Conteúdo Markdown da página</label><textarea id="page-content" spellcheck="true" hidden placeholder="Comece com uma ideia…"></textarea><div id="page-visual" class="visual-host"></div><div id="page-preview" class="markdown" hidden></div><button class="page-corner" aria-label="Arrastar ou clicar para virar a folha" title="Arraste a ponta para virar"></button><div class="paper-bottom"><span id="line-count">0 linhas</span><span id="word-count">0 palavras</span><span id="page-position">01</span></div></article></div>
             <div class="page-navigation" aria-label="Navegação de páginas"><button id="previous-page" class="text-button" aria-label="Página anterior" title="Página anterior">Anterior</button><button id="page-total" class="page-jump" aria-label="Ir para uma página" title="Ir para uma página"></button><button id="next-page" class="text-button" aria-label="Próxima página" title="Próxima página">Próxima</button></div>
             <p id="writing-note" class="writing-note">Prévia visual: o texto fica apenas nesta aba e será perdido ao recarregar.</p>
             <p id="local-save-state" class="local-save-state" role="alert" hidden></p>
@@ -128,10 +179,32 @@
     </main>
   </div>
 
-  <dialog id="notebook-dialog">
+  <dialog id="sharing-dialog" aria-labelledby="sharing-heading"><div id="sharing-form">
+    <h2 id="sharing-heading">Compartilhamento</h2>
+    <div id="sharing-enabled"><p>Ativar a edição colaborativa deste caderno. Ele continuará privado até você mudar a visibilidade ou adicionar uma pessoa.</p><button id="sharing-enable" class="button primary">Ativar colaboração</button></div>
+    <div id="sharing-options" hidden>
+      <label>Visibilidade<select id="sharing-visibility"><option value="private">Privado</option><option value="public">Público para contas logadas</option></select></label><button id="sharing-visibility-save" class="button">Guardar visibilidade</button>
+      <h3>Whitelist e blacklist</h3><label>Buscar pessoa por nome<input id="sharing-search" type="search" minlength="2" maxlength="60"></label><button id="sharing-search-button" class="text-button" type="button">Buscar pessoa</button><label>Pessoa<select id="sharing-person"></select></label>
+      <label>Acesso<select id="sharing-role"><option value="editor">Whitelist: pode editar</option><option value="reader">Whitelist: pode ler</option><option value="blocked">Blacklist: bloquear acesso</option><option value="remove">Retirar da lista</option></select></label>
+      <button id="sharing-access-save" class="button">Guardar acesso</button>
+      <div id="sharing-list"></div><p>Quem já teve acesso pode ter guardado uma cópia. Revogar o acesso impede novas leituras e sincronizações pelo serviço.</p>
+    </div>
+    <p id="sharing-error" class="form-error" role="status"></p><button id="sharing-cancel" class="text-button">Fechar</button>
+  </div></dialog>
+  <dialog id="sharing-history-dialog" aria-labelledby="sharing-history-heading"><h2 id="sharing-history-heading">Versões do caderno compartilhado</h2><p>Criar uma cópia recupera o conteúdo sem substituir o trabalho atual dos participantes.</p><div id="sharing-history-list"></div><p id="sharing-history-error" class="form-error" role="alert"></p><button id="sharing-history-close" class="text-button">Fechar</button></dialog>
+  <dialog id="sharing-profile-dialog" aria-labelledby="sharing-profile-heading"><h2 id="sharing-profile-heading">Perfil público</h2><div id="sharing-profile-books" class="sharing-profile-books"></div><button id="sharing-profile-close" class="text-button">Fechar</button></dialog>
+  <dialog id="markdown-dialog" aria-labelledby="markdown-heading"><form id="markdown-form">
+    <h2 id="markdown-heading">Importar Markdown</h2>
+    <label>Arquivo<input id="markdown-file" type="file" accept=".md,.markdown,text/markdown" required></label>
+    <label>Destino<select id="markdown-target"><option value="">Criar novo caderno</option></select></label>
+    <p id="markdown-summary" role="status"></p>
+    <p id="markdown-error" class="form-error" role="alert"></p>
+    <div class="form-actions"><button id="markdown-cancel" class="text-button" type="button">Cancelar</button><button id="markdown-submit" class="button primary" type="submit" disabled>Confirmar importação</button></div>
+  </form></dialog>
+  <dialog id="notebook-dialog" aria-labelledby="notebook-heading">
     <form id="notebook-form">
       <div class="dialog-top"><button type="button" class="icon-button" data-close="notebook-dialog" aria-label="Fechar">×</button></div>
-      <h2>Novo caderno</h2>
+      <h2 id="notebook-heading">Novo caderno</h2>
       <label>Nome do caderno<input name="title" required maxlength="80" placeholder="Ex.: Design que faz sentido"></label>
       <label>Matéria ou categoria<input name="subject" maxlength="60" placeholder="Ex.: Design"></label>
       <label>Tags <small>separadas por vírgula</small><input name="tags" maxlength="200" placeholder="ux, referências, ideias"></label>
@@ -143,8 +216,8 @@
       <button type="submit" class="button primary">Criar caderno</button>
     </form>
   </dialog>
-  <dialog id="unlock-dialog"><form id="unlock-form" method="dialog"><h2>Desbloquear cadernos</h2><p>Informe a senha de conteúdo, diferente da senha da conta. Ela é usada somente neste navegador e será pedida novamente ao recarregar.</p><label>Senha de conteúdo<input name="contentPassword" type="password" required minlength="4" maxlength="128" autocomplete="off"></label><p id="unlock-error" class="form-error" role="alert"></p><button type="submit" class="button primary">Desbloquear</button><button id="unlock-logout" type="button" class="text-button">Sair da conta</button></form></dialog>
-  <dialog id="history-dialog"><div class="dialog-top"><button class="icon-button" data-close="history-dialog" aria-label="Fechar">×</button></div><h2>Versões desta página.</h2><p>Restaurar cria uma nova versão e preserva a atual.</p><div id="history-list" class="history-list"></div><pre id="history-preview" class="history-preview" hidden></pre><button id="restore-version" class="button primary" disabled>Restaurar esta versão</button></dialog>
+  <dialog id="unlock-dialog" aria-labelledby="unlock-heading"><form id="unlock-form" method="dialog"><h2 id="unlock-heading">Desbloquear cadernos</h2><p>Informe a senha de conteúdo, diferente da senha da conta. Ela é usada somente neste navegador e será pedida novamente ao recarregar.</p><label>Senha de conteúdo<input name="contentPassword" type="password" required minlength="4" maxlength="128" autocomplete="off"></label><p id="unlock-error" class="form-error" role="alert"></p><button type="submit" class="button primary">Desbloquear</button><button id="unlock-logout" type="button" class="text-button">Sair da conta</button></form></dialog>
+  <dialog id="history-dialog" aria-labelledby="history-heading"><div class="dialog-top"><button class="icon-button" data-close="history-dialog" aria-label="Fechar">×</button></div><h2 id="history-heading">Versões desta página.</h2><p>Restaurar cria uma nova versão e preserva a atual.</p><div id="history-list" class="history-list"></div><pre id="history-preview" class="history-preview" hidden></pre><button id="restore-version" class="button primary" disabled>Restaurar esta versão</button></dialog>
   <div id="notification" class="notification" role="status" hidden></div>
   <aside id="study-reminder" class="study-reminder" role="status" hidden><strong>Lembrete de pausa</strong><p>Já são cerca de 45 minutos com o caderno visível.</p><button id="dismiss-reminder" class="text-button">Entendi, continuar</button></aside>
   <dialog id="jump-dialog" aria-labelledby="jump-heading"><form id="jump-form"><div class="dialog-top"><button type="button" class="icon-button" data-close="jump-dialog" aria-label="Fechar">×</button></div><h2 id="jump-heading">Qual página?</h2><label>Número da página<input id="jump-page" type="number" min="1" required step="1"></label><p id="jump-error" class="form-error" role="alert"></p><button class="button primary" type="submit">Abrir página</button></form></dialog>
@@ -155,7 +228,7 @@
       <p>Opção avançada para uma linha da fonte Markdown. Na edição visual, use os controles de texto ao lado da folha.</p>
       <blockquote id="style-sample" class="style-sample"></blockquote>
       <div class="selection-options">
-        <label>Fonte<select id="selection-font"><option value="sans">Simples</option><option value="serif">Literária</option><option value="mono">Monoespaçada</option><option value="hand">Manuscrita do sistema</option></select></label>
+        <label>Fonte<select id="selection-font"><option value="sans">Simples</option><option value="serif">Literária</option><option value="mono">Monoespaçada</option><option value="hand">Manuscrita do sistema</option><option value="book">Clássica de livro</option><option value="humanist">Humanista</option><option value="typewriter">Máquina de escrever</option></select></label>
         <label>Tinta<select id="selection-ink"><option value="ink">Grafite</option><option value="rust">Terracota</option><option value="blue">Azul</option><option value="plum">Ameixa</option></select></label>
         <label>Tamanho<select id="selection-size"><option value="14">14</option><option value="16" selected>16</option><option value="18">18</option><option value="20">20</option><option value="24">24</option></select></label>
       </div>
@@ -163,7 +236,7 @@
       <button type="submit" class="button primary">Aplicar ao trecho</button><button id="remove-style" type="submit" class="text-button">Remover estilo do trecho</button>
     </form>
   </dialog>
-  <dialog id="draft-dialog"><div class="dialog-top"><button class="icon-button" data-close="draft-dialog" aria-label="Fechar">×</button></div><h2>Recuperar rascunhos</h2><p>Há rascunhos de mais de uma aba. A recuperação mantém a revisão de origem; se o servidor mudou, você poderá salvar uma cópia.</p><div id="draft-list"></div></dialog>
+  <dialog id="draft-dialog" aria-labelledby="draft-heading"><div class="dialog-top"><button class="icon-button" data-close="draft-dialog" aria-label="Fechar">×</button></div><h2 id="draft-heading">Recuperar rascunhos</h2><p>Há rascunhos de mais de uma aba. A recuperação mantém a revisão de origem; se o servidor mudou, você poderá salvar uma cópia.</p><div id="draft-list"></div></dialog>
   <dialog id="color-dialog" aria-labelledby="color-heading">
     <form id="color-form">
       <div class="dialog-top"><h2 id="color-heading">Escolha sua tinta</h2><button type="button" class="icon-button" data-close="color-dialog" aria-label="Fechar paleta">×</button></div>
@@ -175,5 +248,20 @@
       <button type="submit" class="button primary">Aplicar cor</button>
     </form>
   </dialog>
-  </body>
+  <dialog id="recovery-dialog" aria-labelledby="recovery-heading">
+    <h2 id="recovery-heading">Recuperar acesso</h2>
+    <p>A recuperação altera somente a senha da conta. A senha de conteúdo dos cadernos continua a mesma.</p>
+    <form id="recovery-form">
+      <label id="recovery-email-field">E-mail da conta<input id="recovery-email" type="email" autocomplete="email" maxlength="254" required></label>
+      <fieldset id="recovery-password-fields" hidden disabled>
+        <label>Nova senha da conta<input id="recovery-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label>
+        <label>Confirme a nova senha<input id="recovery-confirmation" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label>
+      </fieldset>
+      <button id="recovery-submit" class="button primary" type="submit">Enviar link</button>
+    </form>
+    <p id="recovery-status" role="status" aria-live="polite"></p>
+    <button id="recovery-retry" class="text-button" type="button" hidden>Solicitar outro link</button>
+    <button id="recovery-close" class="text-button" type="button">Cancelar</button>
+  </dialog>
+</body>
 </html>

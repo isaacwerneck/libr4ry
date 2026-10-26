@@ -36,6 +36,25 @@ export function revealNotebookRect(viewport, rectangle, bounds) {
   if (dx || dy) positionNotebook(viewport, (Number(viewport.dataset.offset) || 0) + dx, (Number(viewport.dataset.vertical) || 0) + dy);
 }
 
+const cameraMotions = new WeakMap();
+export function stopNotebookCamera(viewport) {
+  cameraMotions.get(viewport)?.cancel();
+  cameraMotions.delete(viewport);
+}
+export function animateNotebookCamera(viewport, before, after, motion = 'full', reduced = false) {
+  stopNotebookCamera(viewport);
+  if (reduced || motion === 'off' || !viewport.animate || !before.width || !after.width) return;
+  const scale = before.width / after.width;
+  const origin = viewport.getBoundingClientRect();
+  const x = before.left - origin.left - (after.left - origin.left) * scale;
+  const y = before.top - origin.top - (after.top - origin.top) * scale;
+  if (Math.abs(scale - 1) < .001 && Math.hypot(x, y) < 1) return;
+  cameraMotions.set(viewport, viewport.animate([
+    { transform: `translate(${x}px, ${y}px) scale(${scale})`, transformOrigin: '0 0' },
+    { transform: 'none', transformOrigin: '0 0' },
+  ], { duration: motion === 'light' ? 160 : 320, easing: 'cubic-bezier(.22,.7,.2,1)' }));
+}
+
 export function setupNotebookViewport(viewport, spread, interrupt, onZoom = () => {}, scene = viewport) {
   let gesture;
   let suppressMenu = false;
@@ -85,7 +104,8 @@ export function setupNotebookViewport(viewport, spread, interrupt, onZoom = () =
     event.preventDefault();
     if (!event.ctrlKey) return;
     const zoom = clampZoom((Number(spread.style.zoom) || 1) * (event.deltaY > 0 ? 1 / 1.1 : 1.1));
-    setZoom(zoom); onZoom(zoom);
+    const before = spread.getBoundingClientRect();
+    setZoom(zoom); onZoom(zoom, before);
   }, { passive: false });
   return setZoom;
 }

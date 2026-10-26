@@ -34,19 +34,21 @@ test('SQL/API: propriedade, histórico, idempotência, conflito e dados privados
     return { status: response.status, data, cookie: response.headers.get('set-cookie')?.split(';')[0] };
   }
 
-  async function register(id, ownKeyset) {
+  async function register(id, ownKeyset, adultConfirmed = true) {
     const contentPassword = randomBytes(3).toString('base64url');
     const password = randomBytes(6).toString('base64url');
     const root = await createRoot(contentPassword, id, ownKeyset);
     roots.set(id, root.key);
     accounts.set(id, { password, contentPassword });
     return request('/api/register', null, {
-      id, keysetId: ownKeyset, email: `${id}@library4.test`, name: 'Teste local',
+      id, keysetId: ownKeyset, email: `${id}@library4.test`, name: 'Teste local', adultConfirmed,
       password, rootEnvelope: root.envelope,
     });
   }
 
   try {
+    const underage = await register(randomUUID(), randomUUID(), false);
+    assert.equal(underage.status, 400);
     const a = await register(owner, keysetId);
     const b = await register(other, randomUUID());
     assert.equal(a.status, 201);
@@ -63,7 +65,16 @@ test('SQL/API: propriedade, histórico, idempotência, conflito e dados privados
       id: notebookId, keysetId, wrappedKey: protectedPayload, metadata: protectedPayload,
       page: { id: pageId, envelope: protectedPayload },
     };
-    assert.equal((await request('/api/notebooks', a.cookie, creation)).status, 201);
+    const creations = await Promise.all([
+      request('/api/notebooks', a.cookie, creation), request('/api/notebooks', a.cookie, creation),
+    ]);
+    assert.equal(creations[0].status, 201);
+    assert.equal(creations[1].status, 201);
+    assert.deepEqual(creations[0].data, creations[1].data);
+    assert.equal((await request('/api/notebooks', a.cookie)).data.notebooks.length, 1);
+    assert.equal((await request('/api/notebooks', a.cookie, { ...creation, page: { ...creation.page, id: randomUUID() } })).status, 409);
+    const otherKeyset = (await request('/api/me', b.cookie)).data.keyset.id;
+    assert.equal((await request('/api/notebooks', b.cookie, { ...creation, keysetId: otherKeyset })).status, 409);
     assert.equal((await request(`/api/notebooks/${notebookId}`, b.cookie)).status, 404);
     assert.equal((await request(`/api/pages/${pageId}/versions`, b.cookie)).status, 404);
     assert.deepEqual((await request('/api/notebooks', b.cookie)).data.notebooks, []);
@@ -101,7 +112,13 @@ test('SQL/API: propriedade, histórico, idempotência, conflito e dados privados
     };
     const live = { id: randomUUID(), title: 'MARCADOR_PRIVADO_DE_TESTE', subject: 'Design', tags: ['ux'],
       pages: [{ id: randomUUID(), title: 'Ideias', content: 'Primeira nota', size: 'medium', font: 16 }], tasks: [] };
+    await assert.rejects(createBook(live, { id: owner }, { id: keysetId }, roots.get(owner), async (path, body) => {
+      await call(path, body);
+      throw new Error('Resposta perdida após commit real');
+    }));
+    const initialCreation = structuredClone(live.creation.body);
     await createBook(live, { id: owner }, { id: keysetId }, roots.get(owner), call);
+    assert.equal((await call('/api/notebooks')).notebooks.filter(book => book.id === live.id).length, 1);
     live.pages[0].content = 'Segunda nota persistida';
     live.pages.push({ id: randomUUID(), title: 'Continuação', content: 'Outro texto', size: 'small', font: 18 });
     live.tasks.push({ id: randomUUID(), title: 'Estudar', done: true });
@@ -112,6 +129,8 @@ test('SQL/API: propriedade, histórico, idempotência, conflito e dados privados
     live.covers = { front: { material: 'cloth', image: { data: 'data:image/webp;base64,UklGR' + 'A'.repeat(150000),
       x: .2, y: .3, width: .4, height: .2 } }, back: { title: 'CONTRACAPA_PRIVADA', color: '#aabbcc' } };
     await saveBook(live, call);
+    assert.equal((await call('/api/notebooks', initialCreation)).revision, 1);
+    assert.equal((await call(`/api/notebooks/${live.id}`)).revision, '2');
     const record = (await call('/api/notebooks')).notebooks.find(book => book.id === live.id);
     const reopened = await loadBook(record, { id: owner }, { id: keysetId }, roots.get(owner), call);
     assert.equal(reopened.pages[0].content, 'Segunda nota persistida');
@@ -160,20 +179,22 @@ test('SQL/API: propriedade, histórico, idempotência, conflito e dados privados
     assert.deepEqual(afterReentry.organization, live.organization);
     assert.deepEqual(afterReentry.covers, live.covers);
   } finally {
-    const fixtureBooks = await database().query('SELECT id FROM notebooks WHERE owner_id = ANY($1::uuid[])', [[owner, other]]);
-    const fixtureIds = fixtureBooks.rows.map(book => book.id);
-    await database().query('DELETE FROM notebook_mutations WHERE notebook_id = ANY($1::uuid[])', [fixtureIds]);
-    await database().query('DELETE FROM tasks WHERE notebook_id = ANY($1::uuid[])', [fixtureIds]);
-    await transaction(async client => {
-      await client.query('DELETE FROM page_versions WHERE page_id IN (SELECT id FROM pages WHERE notebook_id = ANY($1::uuid[]))', [fixtureIds]);
-      await client.query('DELETE FROM pages WHERE notebook_id = ANY($1::uuid[])', [fixtureIds]);
-    });
-    await database().query('DELETE FROM notebooks WHERE id = ANY($1::uuid[])', [fixtureIds]);
-    await database().query('DELETE FROM sessions WHERE owner_id = ANY($1::uuid[])', [[owner, other]]);
-    await database().query('DELETE FROM user_keysets WHERE owner_id = ANY($1::uuid[])', [[owner, other]]);
-    await database().query('DELETE FROM users WHERE id = ANY($1::uuid[])', [[owner, other]]);
-    server.close();
-    await once(server, 'close');
-    await closeDatabase();
+    await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+    try {
+      const fixtureBooks = await database().query('SELECT id FROM notebooks WHERE owner_id = ANY($1::uuid[])', [[owner, other]]);
+      const fixtureIds = fixtureBooks.rows.map(book => book.id);
+      await database().query('DELETE FROM notebook_mutations WHERE notebook_id = ANY($1::uuid[])', [fixtureIds]);
+      await database().query('DELETE FROM tasks WHERE notebook_id = ANY($1::uuid[])', [fixtureIds]);
+      await transaction(async client => {
+        await client.query('DELETE FROM page_versions WHERE page_id IN (SELECT id FROM pages WHERE notebook_id = ANY($1::uuid[]))', [fixtureIds]);
+        await client.query('DELETE FROM pages WHERE notebook_id = ANY($1::uuid[])', [fixtureIds]);
+      });
+      await database().query('DELETE FROM notebooks WHERE id = ANY($1::uuid[])', [fixtureIds]);
+      await database().query('DELETE FROM sessions WHERE owner_id = ANY($1::uuid[])', [[owner, other]]);
+      await database().query('DELETE FROM user_keysets WHERE owner_id = ANY($1::uuid[])', [[owner, other]]);
+      await database().query('DELETE FROM users WHERE id = ANY($1::uuid[])', [[owner, other]]);
+    } finally {
+      await closeDatabase();
+    }
   }
 });

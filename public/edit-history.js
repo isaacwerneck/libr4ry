@@ -25,7 +25,7 @@ export function restoreEdit(book, pageId, caret, redo = false) {
   const values = new Map(state.pages.map(page => [page.id, page]));
   for (const page of book.pages) {
     const value = values.get(page.id);
-    if (value) Object.assign(page, value);
+    if (value) Object.assign(page, value, { date: value.date || '' });
     // shortcut: undo mantém folhas criadas vazias; exclusão exige modelo e API próprios.
     else { page.title = ''; page.content = ''; }
   }
